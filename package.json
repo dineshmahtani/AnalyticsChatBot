@@ -1,0 +1,13 @@
+{
+  "name": "analytics-chatbot",
+  "version": "0.1.0",
+  "description": "Chatbot for querying analytics data",
+  "scripts": {
+    "start": "cd server && npm start",
+    "dev": "cd server && npm run dev",
+    "install-all": "npm install && cd server && npm install",
+    "test": "cd server && npm test"
+  },
+  "author": "",
+  "license": "ISC"
+}
