@@ -15,6 +15,9 @@ yarn-error.log
 /build
 /dist
 
+# Data files
+/data/*.csv
+
 # IDE files
 .idea/
 .vscode/
