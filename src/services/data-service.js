@@ -7,6 +7,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const calculatedFieldsService = require('./calculated-fields');
 
 class DataService {
   constructor() {
@@ -70,6 +71,10 @@ class DataService {
       
       this.dataLoaded = true;
       console.log(`Loaded ${this.data.length} rows of data with ${this.metrics.length} metrics`);
+      
+      // Initialize calculated fields
+      calculatedFieldsService.initializeDefaultFields(this.headers);
+      
       return true;
     } catch (error) {
       console.error('Error loading data:', error);
@@ -183,8 +188,24 @@ class DataService {
       );
     }
     
+    // Apply calculated fields
+    if (query.calculatedFields && query.calculatedFields.length > 0) {
+      results = calculatedFieldsService.applyCalculatedFields(results, query.calculatedFields);
+    }
+    
     // Select only specified metrics if provided
     if (query.metrics && query.metrics.length > 0) {
+      // Check if any of the metrics are calculated fields
+      const calculatedMetrics = query.metrics.filter(metric => 
+        calculatedFieldsService.isCalculatedField(metric)
+      );
+      
+      // Apply calculated fields if needed
+      if (calculatedMetrics.length > 0) {
+        results = calculatedFieldsService.applyCalculatedFields(results, calculatedMetrics);
+      }
+      
+      // Filter to only include requested metrics
       results = results.map(row => {
         const newRow = {};
         newRow[this.headers[0]] = row[this.headers[0]];
@@ -206,6 +227,24 @@ class DataService {
     
     console.log(`Query returned ${results.length} results`);
     return results;
+  }
+  
+  /**
+   * Get all available calculated fields
+   * @returns {Object} - Object with calculated field names as keys
+   */
+  getCalculatedFields() {
+    return calculatedFieldsService.getCalculatedFields();
+  }
+  
+  /**
+   * Register a new calculated field
+   * @param {string} name - Name of the calculated field
+   * @param {Function} formula - Function to calculate the field value
+   * @param {string} description - Description of the calculated field
+   */
+  registerCalculatedField(name, formula, description) {
+    return calculatedFieldsService.registerCalculatedField(name, formula, description);
   }
 }
 

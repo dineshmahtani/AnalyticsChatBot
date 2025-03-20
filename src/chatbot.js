@@ -6,6 +6,7 @@
  */
 
 const bigQueryService = require('./services/bigquery-service');
+const dataService = require('./services/data-service');
 
 class AnalyticsChatbot {
   constructor() {
@@ -103,6 +104,78 @@ class AnalyticsChatbot {
           message: `Top ${limit} sales reps by visits:`,
           data: results
         };
+      }
+      else if (lowerQuery.includes('calculated') && lowerQuery.includes('field')) {
+        // Handle queries about calculated fields
+        if (lowerQuery.includes('list') || lowerQuery.includes('show') || lowerQuery.includes('what')) {
+          // List all available calculated fields
+          const calculatedFields = dataService.getCalculatedFields();
+          const fieldNames = Object.keys(calculatedFields);
+          
+          if (fieldNames.length === 0) {
+            return {
+              type: 'text',
+              message: 'No calculated fields have been defined yet. You can create calculated fields using SQL queries with expressions like "field1 / field2 AS ratio".'
+            };
+          }
+          
+          const fieldDescriptions = fieldNames.map(name => {
+            const field = calculatedFields[name];
+            return `${name}: ${field.description}`;
+          });
+          
+          return {
+            type: 'text',
+            message: 'Available calculated fields:\n' + fieldDescriptions.join('\n')
+          };
+        }
+        else if (lowerQuery.includes('create') || lowerQuery.includes('add') || lowerQuery.includes('define')) {
+          // Extract field definition from the query
+          // This is a very simple extraction and would be more robust with NLP
+          const fieldMatch = lowerQuery.match(/(\w+)\s*([\+\-\*\/])\s*(\w+)\s+as\s+(\w+)/i);
+          
+          if (fieldMatch) {
+            const [, field1, operator, field2, alias] = fieldMatch;
+            
+            // Create the formula function
+            const formula = (row) => {
+              const val1 = Number(row[field1] || 0);
+              const val2 = Number(row[field2] || 0);
+              
+              switch (operator) {
+                case '+': return val1 + val2;
+                case '-': return val1 - val2;
+                case '*': return val1 * val2;
+                case '/': return val2 !== 0 ? val1 / val2 : 0;
+                default: return 0;
+              }
+            };
+            
+            // Register the calculated field
+            dataService.registerCalculatedField(
+              alias,
+              formula,
+              `${field1} ${operator} ${field2}`
+            );
+            
+            return {
+              type: 'text',
+              message: `Created calculated field "${alias}" as ${field1} ${operator} ${field2}`
+            };
+          }
+          else {
+            return {
+              type: 'text',
+              message: 'To create a calculated field, use the format: "Create a calculated field field1 / field2 as ratio"'
+            };
+          }
+        }
+        else {
+          return {
+            type: 'text',
+            message: 'To work with calculated fields, you can:\n1. List calculated fields\n2. Create a calculated field (e.g., "field1 / field2 as ratio")\n3. Use calculated fields in queries'
+          };
+        }
       }
       else if (lowerQuery.includes('select') || lowerQuery.includes('query') || lowerQuery.includes('data')) {
         // For demo purposes, we'll just execute a simple query

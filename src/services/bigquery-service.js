@@ -196,6 +196,45 @@ class BigQueryService {
           .filter(m => m !== 'dealer_legal_name' && m !== 'dealer');
         
         query.metrics = metrics;
+        
+        // Check for calculated fields
+        // Look for expressions like "field1 / field2 as ratio"
+        const calculatedFieldsRegex = /(\w+)\s*([+\-*/])\s*(\w+)\s+as\s+(\w+)/gi;
+        let calculatedFieldMatch;
+        query.calculatedFields = [];
+        
+        while ((calculatedFieldMatch = calculatedFieldsRegex.exec(selectMatch[1])) !== null) {
+          const [, field1, operator, field2, alias] = calculatedFieldMatch;
+          
+          // Register the calculated field
+          const formula = (row) => {
+            const val1 = Number(row[field1] || 0);
+            const val2 = Number(row[field2] || 0);
+            
+            switch (operator) {
+              case '+': return val1 + val2;
+              case '-': return val1 - val2;
+              case '*': return val1 * val2;
+              case '/': return val2 !== 0 ? val1 / val2 : 0;
+              default: return 0;
+            }
+          };
+          
+          // Add to data service
+          dataService.registerCalculatedField(
+            alias,
+            formula,
+            `${field1} ${operator} ${field2}`
+          );
+          
+          // Add to query
+          query.calculatedFields.push(alias);
+          
+          // Add to metrics if not already there
+          if (!query.metrics.includes(alias)) {
+            query.metrics.push(alias);
+          }
+        }
       }
     }
     
