@@ -39,8 +39,11 @@ class DataService {
         }
       }
       
+      console.log(`Found data start at line ${dataStartIndex}: ${lines[dataStartIndex]}`);
+      
       // Extract headers
-      this.headers = lines[dataStartIndex].split(',');
+      this.headers = this.parseCSVLine(lines[dataStartIndex]);
+      console.log('Parsed headers:', this.headers);
       
       // Extract metrics from headers
       this.metrics = this.headers.slice(1);
@@ -169,6 +172,8 @@ class DataService {
       throw new Error('Data not loaded. Call loadData() first.');
     }
     
+    console.log('Executing query with parameters:', query);
+    
     let results = [...this.data];
     
     // Filter by dealer if specified
@@ -199,6 +204,7 @@ class DataService {
       results = results.slice(0, query.limit);
     }
     
+    console.log(`Query returned ${results.length} results`);
     return results;
   }
 }

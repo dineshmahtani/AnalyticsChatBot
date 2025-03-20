@@ -92,6 +92,29 @@ class BigQueryService {
         // Execute the query against local data
         const results = dataService.executeQuery(query);
         
+        // Apply sorting if specified in the query
+        if (query.orderBy) {
+          console.log(`Sorting results by ${query.orderBy.field} ${query.orderBy.direction}`);
+          results.sort((a, b) => {
+            const aValue = a[query.orderBy.field];
+            const bValue = b[query.orderBy.field];
+            
+            // Handle numeric sorting
+            if (!isNaN(Number(aValue)) && !isNaN(Number(bValue))) {
+              return query.orderBy.direction === 'desc' 
+                ? Number(bValue) - Number(aValue) 
+                : Number(aValue) - Number(bValue);
+            }
+            
+            // Handle string sorting
+            const aStr = String(aValue || '');
+            const bStr = String(bValue || '');
+            return query.orderBy.direction === 'desc' 
+              ? bStr.localeCompare(aStr) 
+              : aStr.localeCompare(bStr);
+          });
+        }
+        
         // Convert the results to the expected format
         return this.formatResults(results);
       } else {
@@ -146,6 +169,8 @@ class BigQueryService {
     // Convert to lowercase for easier parsing
     const lowerSql = sql.toLowerCase();
     
+    console.log('Parsing SQL query:', sql);
+    
     // Extract limit
     const limitMatch = lowerSql.match(/limit\s+(\d+)/i);
     if (limitMatch && limitMatch[1]) {
@@ -173,6 +198,20 @@ class BigQueryService {
         query.metrics = metrics;
       }
     }
+    
+    // Extract order by
+    const orderByMatch = lowerSql.match(/order\s+by\s+(.*?)(?:\s+limit|\s*$)/i);
+    if (orderByMatch && orderByMatch[1]) {
+      const orderByParts = orderByMatch[1].trim().split(/\s+/);
+      if (orderByParts.length >= 1) {
+        query.orderBy = {
+          field: orderByParts[0],
+          direction: orderByParts.length > 1 && orderByParts[1].toLowerCase() === 'desc' ? 'desc' : 'asc'
+        };
+      }
+    }
+    
+    console.log('Parsed query:', query);
     
     return query;
   }

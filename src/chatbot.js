@@ -88,12 +88,14 @@ class AnalyticsChatbot {
           };
         }
       }
-      else if (lowerQuery.includes('top') && lowerQuery.includes('sales') && lowerQuery.includes('visits')) {
+      else if (lowerQuery.includes('top') && lowerQuery.includes('visits')) {
         // Handle query for top sales reps by visits
         const limit = lowerQuery.match(/top\s+(\d+)/i) ? parseInt(lowerQuery.match(/top\s+(\d+)/i)[1]) : 5;
         
+        console.log(`Processing top sales reps query with limit: ${limit}`);
+        
         // Query for top sales reps by visits
-        sql = `SELECT * FROM dealer_analytics ORDER BY Visits DESC LIMIT ${limit}`;
+        const sql = `SELECT * FROM dealer_analytics ORDER BY Visits DESC LIMIT ${limit}`;
         const results = await bigQueryService.executeQuery(sql);
         
         return {
