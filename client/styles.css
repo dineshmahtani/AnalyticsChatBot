@@ -184,6 +184,47 @@ footer {
   font-size: 14px;
 }
 
+.statistical-result {
+  background-color: #f0f7ff;
+  border-left: 4px solid var(--primary-color);
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.statistical-note {
+  background-color: #f9f9f9;
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.statistical-note p {
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.statistical-note ul {
+  margin-left: 20px;
+}
+
+.results-explanation {
+  margin: 10px 0;
+  font-weight: 500;
+  color: var(--primary-color);
+}
+
+.results-section-title {
+  margin: 15px 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--primary-color);
+  border-bottom: 1px solid var(--accent-color);
+  padding-bottom: 5px;
+}
+
 .error-message {
   color: #d32f2f;
   font-weight: 500;

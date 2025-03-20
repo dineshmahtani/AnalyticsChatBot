@@ -14,7 +14,7 @@ The current implementation uses a sample CSV file from Adobe Analytics as the da
 
 ## Features
 
-- Natural language query processing using OpenAI API
+- Natural language query processing (rule-based for demo purposes)
 - CSV data parsing and querying
 - Chat-based user interface
 - Results displayed in formatted tables
@@ -24,7 +24,7 @@ The current implementation uses a sample CSV file from Adobe Analytics as the da
 
 - **Frontend**: HTML, CSS, JavaScript
 - **Backend**: Node.js, Express
-- **NLP**: OpenAI API (GPT-4)
+- **NLP**: Rule-based query parsing (no API key required for demo)
 - **Data Processing**: CSV parsing and custom query logic
 
 ## Getting Started
@@ -33,7 +33,6 @@ The current implementation uses a sample CSV file from Adobe Analytics as the da
 
 - Node.js (v14 or higher)
 - NPM (v6 or higher)
-- OpenAI API key
 
 ### Installation
 
@@ -46,17 +45,6 @@ The current implementation uses a sample CSV file from Adobe Analytics as the da
 2. Install dependencies:
    ```
    npm run install-all
-   ```
-
-3. Create a `.env` file in the server directory:
-   ```
-   cd server
-   touch .env
-   ```
-
-4. Add your OpenAI API key to the `.env` file:
-   ```
-   OPENAI_API_KEY=your_api_key_here
    ```
 
 ### Running the Application
@@ -75,10 +63,10 @@ The current implementation uses a sample CSV file from Adobe Analytics as the da
 
 Try asking questions like:
 
-- "Which dealer has the most visits?"
-- "Show me the top 5 dealers by credit card additions"
+- "Which sales rep has the most visits?"
+- "Show me the top 5 sales reps by credit card additions"
 - "What are the metrics for boutique telus?"
-- "Compare visits and credit card additions for the top dealers"
+- "Compare visits and credit card additions for the top sales reps"
 
 ## Project Structure
 

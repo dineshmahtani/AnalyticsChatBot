@@ -132,8 +132,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const query = results.query || {};
     const data = results.results || [];
+    const statistics = results.statistics || null;
+    const combinedResults = results.combinedResults || false;
+    const topResults = results.topResults || [];
+    const bottomResults = results.bottomResults || [];
     
-    if (data.length === 0) {
+    if (data.length === 0 && !statistics && !combinedResults) {
       addMessage('I couldn\'t find any data matching your query.', 'bot');
       return;
     }
@@ -143,11 +147,62 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Add query interpretation if available
     if (query.intent) {
-      responseHtml += `<div class="query-interpretation">I understood you wanted to ${query.intent.replace(/_/g, ' ')}</div>`;
+      const intentDisplay = query.intent === 'compare_top_bottom' ? 
+        'compare top and bottom results' : 
+        query.intent.replace(/_/g, ' ');
+      responseHtml += `<div class="query-interpretation">I understood you wanted to ${intentDisplay}</div>`;
     }
     
-    // Add results table
-    if (data.length > 0) {
+    // Add statistical results if available
+    if (statistics) {
+      responseHtml += `<div class="statistical-result">${statistics.description}</div>`;
+      
+      // Add additional context for statistical results
+      if (statistics.operation === 'correlation') {
+        responseHtml += `<div class="statistical-note">
+          <p>Correlation coefficient ranges from -1 to 1:</p>
+          <ul>
+            <li>1: Perfect positive correlation</li>
+            <li>0: No correlation</li>
+            <li>-1: Perfect negative correlation</li>
+          </ul>
+        </div>`;
+      }
+    }
+    
+    // Add explanation for combined results
+    if (combinedResults && topResults.length > 0 && bottomResults.length > 0) {
+      // Import the createResultsExplanation function from results.js
+      if (typeof createResultsExplanation === 'function') {
+        const explanation = createResultsExplanation(null, query, statistics, combinedResults, topResults, bottomResults);
+        if (explanation) {
+          responseHtml += explanation;
+        }
+      }
+    }
+    
+    // Handle combined top and bottom results
+    if (combinedResults) {
+      if (topResults.length > 0) {
+        responseHtml += `<h3 class="results-section-title">Top ${topResults.length} Results</h3>`;
+        responseHtml += createResultsTable(topResults);
+      }
+      
+      if (bottomResults.length > 0) {
+        responseHtml += `<h3 class="results-section-title">Bottom ${bottomResults.length} Results</h3>`;
+        responseHtml += createResultsTable(bottomResults);
+      }
+    }
+    // Add regular results table and explanation
+    else if (data.length > 0) {
+      // Add explanation for regular results
+      if (typeof createResultsExplanation === 'function') {
+        const explanation = createResultsExplanation(data, query, statistics);
+        if (explanation) {
+          responseHtml += explanation;
+        }
+      }
+      
       responseHtml += createResultsTable(data);
     }
     
@@ -163,13 +218,22 @@ document.addEventListener('DOMContentLoaded', () => {
   function createResultsTable(data) {
     if (!data || data.length === 0) return '';
     
-    const headers = Object.keys(data[0]);
+    const allHeaders = Object.keys(data[0]);
+    
+    // Determine if we have a ratio calculation
+    const hasRatio = allHeaders.includes('calculated_ratio');
+    const ratioLabel = hasRatio && data[0].ratio_label ? data[0].ratio_label : 'Ratio';
+    
+    // Filter out ratio_label from headers if present, but keep calculated_ratio
+    const headers = allHeaders.filter(header => header !== 'ratio_label');
     
     let tableHtml = '<table class="results-table"><thead><tr>';
     
     // Table headers
     headers.forEach(header => {
-      tableHtml += `<th>${formatHeader(header)}</th>`;
+      // For calculated_ratio, use the dynamic ratio label from the first row
+      const headerText = (header === 'calculated_ratio' && hasRatio) ? ratioLabel : formatHeader(header);
+      tableHtml += `<th>${headerText}</th>`;
     });
     
     tableHtml += '</tr></thead><tbody>';
@@ -178,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
     data.forEach(row => {
       tableHtml += '<tr>';
       headers.forEach(header => {
-        tableHtml += `<td>${formatValue(row[header])}</td>`;
+        tableHtml += `<td>${formatValue(row[header], header)}</td>`;
       });
       tableHtml += '</tr>';
     });
@@ -194,29 +258,49 @@ document.addEventListener('DOMContentLoaded', () => {
    * @returns {string} Formatted header
    */
   function formatHeader(header) {
-    if (header === 'dealer') return 'Dealer';
+    if (header === 'salesRep') return 'Sales Representative';
     
-    // Handle special case for the credit card metric
-    if (header.includes('pap_added:credit_card')) {
-      return 'Credit Card Additions';
+    // Map column names to display names
+    const displayNames = {
+      "_1": "Credit Card Additions",
+      "_2": "Order Confirmations",
+      "﻿#=================================================================": "Sales Representative"
+    };
+    
+    // Check if we have a display name mapping
+    if (displayNames[header]) {
+      return displayNames[header];
+    }
+    
+    // Handle calculated ratio
+    if (header === 'calculated_ratio') {
+      return 'Ratio';
     }
     
     return header
       .replace(/_/g, ' ')
+      .replace(/>/g, ' - ')
+      .replace(/:/g, ' ')
       .replace(/\b\w/g, c => c.toUpperCase());
   }
   
   /**
    * Format a value for display
    * @param {any} value - The value to format
+   * @param {string} header - The header name
    * @returns {string} Formatted value
    */
-  function formatValue(value) {
+  function formatValue(value, header) {
     if (value === null || value === undefined) {
       return '-';
     }
     
     if (typeof value === 'number') {
+      // Format ratio with more decimal places
+      if (header === 'calculated_ratio') {
+        return value.toFixed(4);
+      }
+      
       // Format large numbers with commas
       return value.toLocaleString();
     }
