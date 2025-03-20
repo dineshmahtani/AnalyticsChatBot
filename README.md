@@ -33,6 +33,8 @@ The current implementation uses a sample CSV file from Adobe Analytics as the da
 
 - Node.js (v14 or higher)
 - NPM (v6 or higher)
+- Git (for version control)
+- Visual Studio Code (recommended)
 
 ### Installation
 
@@ -45,6 +47,38 @@ The current implementation uses a sample CSV file from Adobe Analytics as the da
 2. Install dependencies:
    ```
    npm run install-all
+   ```
+
+### Using the VS Code Workspace
+
+A VS Code workspace file has been created to make development easier:
+
+1. Open VS Code
+2. Go to File > Open Workspace from File...
+3. Navigate to `/Users/dinesh/Desktop/AnalyticsChatBot.code-workspace` and open it
+
+The workspace includes:
+- Recommended extensions
+- Debugging configurations
+- Project-specific settings
+
+### Creating Checkpoints (Git Commits)
+
+To save your progress and create checkpoints:
+
+1. Stage your changes:
+   ```
+   git add <files-to-commit>
+   ```
+
+2. Create a checkpoint (commit):
+   ```
+   git commit -m "Descriptive message about your changes"
+   ```
+
+3. View your checkpoint history:
+   ```
+   git log --oneline
    ```
 
 ### Running the Application
