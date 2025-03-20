@@ -5,7 +5,24 @@
  * including user interactions, message display, and configuration management.
  */
 
-document.addEventListener('DOMContentLoaded', () => {
+// Import the chatbot module
+const chatbot = require('./chatbot');
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // Initialize the chatbot with local data configuration
+  try {
+    await chatbot.initialize({
+      bigQuery: {
+        projectId: 'local-testing',
+        location: 'local',
+        dataset: 'telus_analytics',
+        useLocalData: true
+      }
+    });
+    console.log('Chatbot initialized successfully');
+  } catch (error) {
+    console.error('Error initializing chatbot:', error);
+  }
   // DOM Elements
   const chatForm = document.getElementById('chat-form');
   const userInput = document.getElementById('user-input');
@@ -256,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
    * Process a user message
    * @param {string} message - User message
    */
-  function processMessage(message) {
+  async function processMessage(message) {
     // Show loading indicator
     const loadingDiv = document.createElement('div');
     loadingDiv.classList.add('message', 'bot');
@@ -276,71 +293,24 @@ document.addEventListener('DOMContentLoaded', () => {
     chatMessages.appendChild(loadingDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
     
-    // In a real application, this would call the backend API
-    // For this demo, we'll simulate a response after a delay
-    setTimeout(() => {
+    try {
+      // Process the message using the chatbot
+      const response = await chatbot.processQuery(message);
+      
       // Remove loading indicator
       chatMessages.removeChild(loadingDiv);
       
-      // Process the message based on keywords (simulating the backend)
-      const lowerMessage = message.toLowerCase();
+      // Display the response
+      addMessage(response, 'bot');
+    } catch (error) {
+      // Remove loading indicator
+      chatMessages.removeChild(loadingDiv);
       
-      if (lowerMessage.includes('list tables') || lowerMessage.includes('show tables')) {
-        addMessage({
-          type: 'tableList',
-          message: 'Here are the available tables:',
-          data: ['sample_table_1', 'sample_table_2', 'sample_table_3']
-        }, 'bot');
-      } 
-      else if (lowerMessage.includes('schema') || lowerMessage.includes('structure')) {
-        const tableMatch = lowerMessage.match(/schema (?:of|for)? (\w+)/i) || 
-                          lowerMessage.match(/structure (?:of|for)? (\w+)/i) ||
-                          lowerMessage.match(/(\w+) schema/i);
-        
-        if (tableMatch && tableMatch[1]) {
-          const tableName = tableMatch[1];
-          addMessage({
-            type: 'tableSchema',
-            message: `Schema for table ${tableName}:`,
-            data: [
-              { name: 'id', type: 'INTEGER', mode: 'REQUIRED', description: 'Unique identifier' },
-              { name: 'name', type: 'STRING', mode: 'REQUIRED', description: 'Name field' },
-              { name: 'created_at', type: 'TIMESTAMP', mode: 'NULLABLE', description: 'Creation timestamp' }
-            ]
-          }, 'bot');
-        } else {
-          addMessage({
-            type: 'error',
-            message: 'Please specify a table name to get its schema.'
-          }, 'bot');
-        }
-      }
-      else if (lowerMessage.includes('select') || lowerMessage.includes('query')) {
-        addMessage({
-          type: 'queryResults',
-          message: 'Query results:',
-          data: {
-            rows: [
-              { id: 1, name: 'Sample Data 1', created_at: '2025-03-15T10:30:00Z' },
-              { id: 2, name: 'Sample Data 2', created_at: '2025-03-16T14:45:00Z' }
-            ],
-            metadata: {
-              schema: [
-                { name: 'id', type: 'INTEGER' },
-                { name: 'name', type: 'STRING' },
-                { name: 'created_at', type: 'TIMESTAMP' }
-              ],
-              rowCount: 2
-            }
-          }
-        }, 'bot');
-      }
-      else {
-        addMessage({
-          type: 'text',
-          message: "I'm not sure how to answer that. Try asking about tables, schemas, or running a query."
-        }, 'bot');
-      }
-    }, 1000);
+      // Display error message
+      addMessage({
+        type: 'error',
+        message: `Error processing your query: ${error.message}`
+      }, 'bot');
+    }
   }
 });

@@ -17,13 +17,13 @@ class AnalyticsChatbot {
    * @param {Object} config - Configuration object
    * @param {Object} config.bigQuery - BigQuery configuration
    */
-  initialize(config) {
+  async initialize(config) {
     if (!config || !config.bigQuery) {
       throw new Error('Invalid configuration. BigQuery configuration is required.');
     }
 
     // Initialize BigQuery service
-    bigQueryService.initialize(config.bigQuery);
+    await bigQueryService.initialize(config.bigQuery);
     this.initialized = true;
     console.log('Analytics Chatbot initialized successfully');
   }
@@ -56,7 +56,16 @@ class AnalyticsChatbot {
           message: 'Here are the available tables:',
           data: tables
         };
-      } 
+      }
+      else if (lowerQuery.includes('dealer') && (lowerQuery.includes('list') || lowerQuery.includes('show'))) {
+        // Execute a query to get all dealers
+        const results = await bigQueryService.executeQuery('SELECT * FROM dealer_analytics LIMIT 10');
+        return {
+          type: 'queryResults',
+          message: 'Here are the dealers:',
+          data: results
+        };
+      }
       else if (lowerQuery.includes('schema') || lowerQuery.includes('structure')) {
         // Extract table name - this is a very simple extraction
         // In a real implementation, use NLP to extract entities
@@ -79,7 +88,7 @@ class AnalyticsChatbot {
           };
         }
       }
-      else if (lowerQuery.includes('select') || lowerQuery.includes('query')) {
+      else if (lowerQuery.includes('select') || lowerQuery.includes('query') || lowerQuery.includes('data')) {
         // For demo purposes, we'll just execute a simple query
         // In a real implementation, use NLP to convert natural language to SQL
         let sql;
@@ -87,10 +96,15 @@ class AnalyticsChatbot {
         if (lowerQuery.includes('select')) {
           // If the user provided a SQL query, use it directly
           sql = userQuery;
+        } else if (lowerQuery.includes('telus')) {
+          // Query for TELUS data
+          sql = 'SELECT * FROM dealer_analytics WHERE dealer LIKE "%telus%" LIMIT 10';
+        } else if (lowerQuery.includes('walmart') || lowerQuery.includes('wal-mart')) {
+          // Query for Walmart data
+          sql = 'SELECT * FROM dealer_analytics WHERE dealer LIKE "%wal-mart%" LIMIT 10';
         } else {
-          // Simple keyword-based query generation
-          // This is just a placeholder - in a real implementation, use NLP
-          sql = 'SELECT * FROM sample_table_1 LIMIT 10';
+          // Default query
+          sql = 'SELECT * FROM dealer_analytics LIMIT 10';
         }
         
         const results = await bigQueryService.executeQuery(sql);

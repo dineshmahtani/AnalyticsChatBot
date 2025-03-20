@@ -139,11 +139,33 @@ To extend the chatbot's capabilities:
 
 ### Testing
 
-The project includes mock data for testing without a live BigQuery connection. To test with real data:
+The project includes two testing options:
+
+#### Local CSV Data Testing
+
+The chatbot can use local CSV data files for testing without a BigQuery connection:
+
+1. Place your CSV data files in the `data/` directory.
+
+2. The system is pre-configured to use the file `data/Dealer MSS (Copy)_Dinesh (Copy) - TELUS Global Production - Mar 20, 2025.csv`.
+
+3. Start the application with `npm run start` to test with this local data.
+
+4. Example queries for local data:
+   - "List all tables" - Shows the available tables (dealer_analytics)
+   - "Show me dealer data" - Displays dealer information
+   - "Show data for Telus" - Filters data for Telus dealers
+   - "Show data for Walmart" - Filters data for Walmart dealers
+
+#### BigQuery Testing
+
+To test with real BigQuery data:
 
 1. Configure your GCP details as described in the "Updating GCP Configuration" section.
 
-2. Modify the `BigQueryService` class to use the actual MCP tool calls instead of the mock data.
+2. Set `useLocalData: false` in the chatbot initialization in `src/app.js`.
+
+3. Modify the `BigQueryService` class to use the actual MCP tool calls instead of the mock data.
 
 ## Troubleshooting
 
