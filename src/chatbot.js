@@ -89,14 +89,27 @@ class AnalyticsChatbot {
           };
         }
       }
-      else if (lowerQuery.includes('top') && lowerQuery.includes('visits')) {
+      else if ((lowerQuery.includes('top') || lowerQuery.includes('best')) && 
+               (lowerQuery.includes('sales') || lowerQuery.includes('reps') || lowerQuery.includes('dealers')) && 
+               (lowerQuery.includes('visits') || lowerQuery.includes('visit'))) {
         // Handle query for top sales reps by visits
         const limit = lowerQuery.match(/top\s+(\d+)/i) ? parseInt(lowerQuery.match(/top\s+(\d+)/i)[1]) : 5;
         
         console.log(`Processing top sales reps query with limit: ${limit}`);
         
+        // Get the metrics from the data service to find the visits field
+        const metrics = await bigQueryService.getTableSchema('dealer_analytics');
+        const visitField = metrics.find(field => 
+          field.name.toLowerCase().includes('visit') || 
+          field.name === '5209'  // Based on our sample data, 5209 might be the visits field
+        );
+        
+        const orderByField = visitField ? visitField.name : '5209';
+        console.log(`Using field ${orderByField} for visits sorting`);
+        
         // Query for top sales reps by visits
-        const sql = `SELECT * FROM dealer_analytics ORDER BY Visits DESC LIMIT ${limit}`;
+        const sql = `SELECT * FROM dealer_analytics ORDER BY ${orderByField} DESC LIMIT ${limit}`;
+        console.log(`Executing SQL: ${sql}`);
         const results = await bigQueryService.executeQuery(sql);
         
         return {

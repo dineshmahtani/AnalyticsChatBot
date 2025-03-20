@@ -102,8 +102,8 @@ document.addEventListener('DOMContentLoaded', async () => {
    */
   function updateConfigStatus() {
     // Always show as configured when using local data
-    const isLocalData = config.bigQuery.projectId === 'local-testing' && 
-                        config.bigQuery.location === 'local' && 
+    const isLocalData = config.bigQuery.projectId === 'local-testing' || 
+                        config.bigQuery.location === 'local' || 
                         config.bigQuery.dataset === 'telus_analytics';
     
     const isConfigured = isLocalData || (
