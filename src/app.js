@@ -36,9 +36,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Configuration state
   let config = {
     bigQuery: {
-      projectId: localStorage.getItem('bq_project_id') || '',
-      location: localStorage.getItem('bq_location') || '',
-      dataset: localStorage.getItem('bq_dataset') || ''
+      projectId: localStorage.getItem('bq_project_id') || 'local-testing',
+      location: localStorage.getItem('bq_location') || 'local',
+      dataset: localStorage.getItem('bq_dataset') || 'telus_analytics'
     }
   };
 
@@ -101,12 +101,23 @@ document.addEventListener('DOMContentLoaded', async () => {
    * Update the configuration status display
    */
   function updateConfigStatus() {
-    const isConfigured = config.bigQuery.projectId && 
-                         config.bigQuery.location && 
-                         config.bigQuery.dataset;
+    // Always show as configured when using local data
+    const isLocalData = config.bigQuery.projectId === 'local-testing' && 
+                        config.bigQuery.location === 'local' && 
+                        config.bigQuery.dataset === 'telus_analytics';
+    
+    const isConfigured = isLocalData || (
+      config.bigQuery.projectId && 
+      config.bigQuery.location && 
+      config.bigQuery.dataset
+    );
     
     if (isConfigured) {
-      configStatus.textContent = 'Configured';
+      if (isLocalData) {
+        configStatus.textContent = 'Using Local Data';
+      } else {
+        configStatus.textContent = 'Configured';
+      }
       configStatus.classList.add('configured');
     } else {
       configStatus.textContent = 'Not Configured';

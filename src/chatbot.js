@@ -88,6 +88,20 @@ class AnalyticsChatbot {
           };
         }
       }
+      else if (lowerQuery.includes('top') && lowerQuery.includes('sales') && lowerQuery.includes('visits')) {
+        // Handle query for top sales reps by visits
+        const limit = lowerQuery.match(/top\s+(\d+)/i) ? parseInt(lowerQuery.match(/top\s+(\d+)/i)[1]) : 5;
+        
+        // Query for top sales reps by visits
+        sql = `SELECT * FROM dealer_analytics ORDER BY Visits DESC LIMIT ${limit}`;
+        const results = await bigQueryService.executeQuery(sql);
+        
+        return {
+          type: 'queryResults',
+          message: `Top ${limit} sales reps by visits:`,
+          data: results
+        };
+      }
       else if (lowerQuery.includes('select') || lowerQuery.includes('query') || lowerQuery.includes('data')) {
         // For demo purposes, we'll just execute a simple query
         // In a real implementation, use NLP to convert natural language to SQL
