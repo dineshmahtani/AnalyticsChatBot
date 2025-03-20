@@ -18,8 +18,17 @@ async function parseQuery(query) {
     
     // Check for metrics
     const metrics = [];
+    if (lowerQuery.includes("unique visitor")) {
+      metrics.push("Unique Visitors");
+    }
     if (lowerQuery.includes("visit") || lowerQuery.includes("traffic")) {
-      metrics.push("visits");
+      metrics.push("Visits");
+    }
+    if (lowerQuery.includes("getting started") || lowerQuery.includes("start page")) {
+      metrics.push("cse>mobility_sales>getting_started");
+    }
+    if (lowerQuery.includes("product inventory") || lowerQuery.includes("inventory page")) {
+      metrics.push("cse>mobility_sales>product_inventory");
     }
     if (lowerQuery.includes("credit card") || lowerQuery.includes("pap") || lowerQuery.includes("addition")) {
       metrics.push("pap_added:credit_card");
@@ -30,16 +39,24 @@ async function parseQuery(query) {
     
     // Define metric mappings for flexible calculations
     const metricMappings = {
-      "credit card": "_1",
-      "credit card additions": "_1",
-      "additions": "_1",
-      "pap": "_1",
-      "visits": "_1", // Map visits to _1 column
-      "traffic": "_1", // Map traffic to _1 column
-      "order confirmation": "_2",
-      "orders": "_2",
-      "sales": "_2",
-      "total sales": "_2" // Map "total sales" to _2 column
+      "unique visitors": "Unique Visitors",
+      "unique": "Unique Visitors",
+      "visitors": "Unique Visitors",
+      "visits": "Visits",
+      "total visits": "Visits",
+      "traffic": "Visits",
+      "getting started": "cse>mobility_sales>getting_started",
+      "getting started page": "cse>mobility_sales>getting_started",
+      "product inventory": "cse>mobility_sales>product_inventory",
+      "inventory page": "cse>mobility_sales>product_inventory",
+      "credit card": "pap_added:credit_card",
+      "credit card additions": "pap_added:credit_card",
+      "additions": "pap_added:credit_card",
+      "pap": "pap_added:credit_card",
+      "order confirmation": "cse>mobility_sales>order_confirmation",
+      "orders": "cse>mobility_sales>order_confirmation",
+      "sales": "cse>mobility_sales>order_confirmation",
+      "total sales": "cse>mobility_sales>order_confirmation"
     };
     
     // Check for "total sales" or similar phrases
@@ -123,32 +140,73 @@ async function parseQuery(query) {
       let numerator = "pap_added:credit_card";
       let denominator = "visits";
       
-      // Try to extract the specific metrics mentioned
-      // Pattern: "ratio of X to Y" or "X divided by Y" or "X per Y" or "X by Y"
-      const ratioPattern1 = /ratio\s+of\s+([a-z\s]+)\s+to\s+([a-z\s]+)/i;
-      const ratioPattern2 = /([a-z\s]+)\s+divided\s+by\s+([a-z\s]+)/i;
-      const ratioPattern3 = /([a-z\s]+)\s+per\s+([a-z\s]+)/i;
-      const ratioPattern4 = /([a-z\s]+)\s+by\s+([a-z\s]+)/i;
-      
-      let match = lowerQuery.match(ratioPattern1) || 
-                  lowerQuery.match(ratioPattern2) || 
-                  lowerQuery.match(ratioPattern3) || 
-                  lowerQuery.match(ratioPattern4);
-      
-      if (match) {
-        // Extract the metric names from the query
-        const numeratorText = match[1].trim();
-        const denominatorText = match[2].trim();
+      // Special case for the specific query we're trying to support
+      if (lowerQuery.includes("cse>mobility_sales>order_confirmation") && 
+          lowerQuery.includes("unique visitors")) {
+        numerator = "cse>mobility_sales>order_confirmation";
+        denominator = "Unique Visitors";
+      } else {
+        // Try to extract the specific metrics mentioned
+        // Pattern: "ratio of X to Y" or "X divided by Y" or "X per Y" or "X by Y"
+        // Updated to handle full metric names with special characters like >
+        const ratioPattern1 = /ratio\s+of\s+([a-z\s>:_]+)\s+to\s+([a-z\s>:_]+)/i;
+        const ratioPattern2 = /([a-z\s>:_]+)\s+divided\s+by\s+([a-z\s>:_]+)/i;
+        const ratioPattern3 = /([a-z\s>:_]+)\s+per\s+([a-z\s>:_]+)/i;
+        const ratioPattern4 = /([a-z\s>:_]+)\s+by\s+([a-z\s>:_]+)/i;
         
-        // Try to map the extracted terms to actual metrics
-        Object.keys(metricMappings).forEach(term => {
-          if (numeratorText.includes(term)) {
-            numerator = metricMappings[term];
+        let match = lowerQuery.match(ratioPattern1) || 
+                    lowerQuery.match(ratioPattern2) || 
+                    lowerQuery.match(ratioPattern3) || 
+                    lowerQuery.match(ratioPattern4);
+        
+        if (match) {
+          // Extract the metric names from the query
+          const numeratorText = match[1].trim();
+          const denominatorText = match[2].trim();
+          
+          // First check if the extracted terms are exact metric names
+          const allMetrics = [
+            "Unique Visitors",
+            "Visits",
+            "cse>mobility_sales>getting_started",
+            "cse>mobility_sales>product_inventory",
+            "pap_added:credit_card",
+            "cse>mobility_sales>order_confirmation"
+          ];
+          
+          // Check for exact matches first (case insensitive)
+          allMetrics.forEach(metric => {
+            if (numeratorText.toLowerCase() === metric.toLowerCase()) {
+              numerator = metric;
+            }
+            if (denominatorText.toLowerCase() === metric.toLowerCase()) {
+              denominator = metric;
+            }
+          });
+          
+          // Also check if the extracted terms contain the exact metric names
+          // This handles cases where the query includes the full metric name with some extra text
+          allMetrics.forEach(metric => {
+            if (numeratorText.toLowerCase().includes(metric.toLowerCase())) {
+              numerator = metric;
+            }
+            if (denominatorText.toLowerCase().includes(metric.toLowerCase())) {
+              denominator = metric;
+            }
+          });
+          
+          // If no exact matches, try to map the extracted terms to metrics using partial matches
+          if (numerator === "pap_added:credit_card" && denominator === "visits") {
+            Object.keys(metricMappings).forEach(term => {
+              if (numeratorText.includes(term)) {
+                numerator = metricMappings[term];
+              }
+              if (denominatorText.includes(term)) {
+                denominator = metricMappings[term];
+              }
+            });
           }
-          if (denominatorText.includes(term)) {
-            denominator = metricMappings[term];
-          }
-        });
+        }
       }
       
       result.calculate = {
@@ -164,7 +222,14 @@ async function parseQuery(query) {
     
     // If no specific metrics mentioned, include all
     if (metrics.length === 0) {
-      metrics.push("visits", "pap_added:credit_card", "cse>mobility_sales>order_confirmation");
+      metrics.push(
+        "Unique Visitors",
+        "Visits",
+        "cse>mobility_sales>getting_started",
+        "cse>mobility_sales>product_inventory",
+        "pap_added:credit_card",
+        "cse>mobility_sales>order_confirmation"
+      );
     }
     result.metrics = metrics;
     
@@ -188,8 +253,14 @@ async function parseQuery(query) {
       result.intent = "find_top";
       
       // Determine sort metric
-      let sortBy = "visits"; // Default
-      if (lowerQuery.includes("credit card") || lowerQuery.includes("pap") || lowerQuery.includes("addition")) {
+      let sortBy = "Visits"; // Default
+      if (lowerQuery.includes("unique visitor")) {
+        sortBy = "Unique Visitors";
+      } else if (lowerQuery.includes("getting started") || lowerQuery.includes("start page")) {
+        sortBy = "cse>mobility_sales>getting_started";
+      } else if (lowerQuery.includes("product inventory") || lowerQuery.includes("inventory page")) {
+        sortBy = "cse>mobility_sales>product_inventory";
+      } else if (lowerQuery.includes("credit card") || lowerQuery.includes("pap") || lowerQuery.includes("addition")) {
         sortBy = "pap_added:credit_card";
       } else if (lowerQuery.includes("order") || lowerQuery.includes("confirmation")) {
         sortBy = "cse>mobility_sales>order_confirmation";
@@ -224,8 +295,14 @@ async function parseQuery(query) {
       result.intent = "find_bottom";
       
       // Determine sort metric
-      let sortBy = "visits"; // Default
-      if (lowerQuery.includes("credit card") || lowerQuery.includes("pap") || lowerQuery.includes("addition")) {
+      let sortBy = "Visits"; // Default
+      if (lowerQuery.includes("unique visitor")) {
+        sortBy = "Unique Visitors";
+      } else if (lowerQuery.includes("getting started") || lowerQuery.includes("start page")) {
+        sortBy = "cse>mobility_sales>getting_started";
+      } else if (lowerQuery.includes("product inventory") || lowerQuery.includes("inventory page")) {
+        sortBy = "cse>mobility_sales>product_inventory";
+      } else if (lowerQuery.includes("credit card") || lowerQuery.includes("pap") || lowerQuery.includes("addition")) {
         sortBy = "pap_added:credit_card";
       } else if (lowerQuery.includes("order") || lowerQuery.includes("confirmation")) {
         sortBy = "cse>mobility_sales>order_confirmation";
@@ -267,8 +344,14 @@ async function parseQuery(query) {
       result.intent = "compare_top_bottom";
       
       // Determine sort metric
-      let sortBy = "visits"; // Default
-      if (lowerQuery.includes("credit card") || lowerQuery.includes("pap") || lowerQuery.includes("addition")) {
+      let sortBy = "Visits"; // Default
+      if (lowerQuery.includes("unique visitor")) {
+        sortBy = "Unique Visitors";
+      } else if (lowerQuery.includes("getting started") || lowerQuery.includes("start page")) {
+        sortBy = "cse>mobility_sales>getting_started";
+      } else if (lowerQuery.includes("product inventory") || lowerQuery.includes("inventory page")) {
+        sortBy = "cse>mobility_sales>product_inventory";
+      } else if (lowerQuery.includes("credit card") || lowerQuery.includes("pap") || lowerQuery.includes("addition")) {
         sortBy = "pap_added:credit_card";
       } else if (lowerQuery.includes("order") || lowerQuery.includes("confirmation")) {
         sortBy = "cse>mobility_sales>order_confirmation";

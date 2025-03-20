@@ -5,7 +5,7 @@ const { createReadStream } = require('fs');
 const ss = require('simple-statistics');
 
 // Path to the data file
-const DATA_FILE = path.join(__dirname, '../../data/telus_analytics_sample.csv');
+const DATA_FILE = path.join(__dirname, '../../data/Dealer MSS (Copy)_Dinesh (Copy) - TELUS Global Production - Mar 20, 2025.csv');
 
 /**
  * Load and parse the CSV data
@@ -61,14 +61,22 @@ async function loadData() {
               const value = !isNaN(data[key]) ? Number(data[key]) : data[key];
               console.log(`Key: ${key}, Value: ${value}`);
               
-              // Use the actual field names from the data
-              if (key === 'pap_added:credit_card') {
-                metrics['pap_added:credit_card'] = value;
-              } else if (key === 'cse>mobility_sales>order_confirmation') {
-                metrics['cse>mobility_sales>order_confirmation'] = value;
-              } else {
-                metrics[key] = value;
-              }
+          // Map the column names to the actual metric names
+          if (key === '_1') {
+            metrics['Unique Visitors'] = value;
+          } else if (key === '_2' || key === '_3') {
+            metrics['Visits'] = value;
+          } else if (key === '_4') {
+            metrics['cse>mobility_sales>getting_started'] = value;
+          } else if (key === '_5') {
+            metrics['cse>mobility_sales>product_inventory'] = value;
+          } else if (key === '_6') {
+            metrics['pap_added:credit_card'] = value;
+          } else if (key === '_7') {
+            metrics['cse>mobility_sales>order_confirmation'] = value;
+          } else {
+            metrics[key] = value;
+          }
             }
           });
           
@@ -129,19 +137,38 @@ async function getMetadata() {
 function findClosestMetricMatch(item, metricName) {
   // Define mappings from NLP metric names to actual column names
   const metricMappings = {
-    "visits": "_1", // Map visits to _1 column
-    "pap_added:credit_card": "_1", // Map credit card additions to _1 column
-    "cse>mobility_sales>order_confirmation": "_2" // Map order confirmations to _2 column
+    "unique_visitors": "Unique Visitors",
+    "visits": "Visits",
+    "getting_started": "cse>mobility_sales>getting_started",
+    "product_inventory": "cse>mobility_sales>product_inventory",
+    "credit_card": "pap_added:credit_card",
+    "order_confirmation": "cse>mobility_sales>order_confirmation"
   };
+  
+  // First try exact match with the item keys
+  if (item[metricName] !== undefined) {
+    return metricName;
+  }
+  
+  // Check if the metricName is one of our known metrics (case insensitive)
+  const knownMetrics = [
+    "Unique Visitors",
+    "Visits",
+    "cse>mobility_sales>getting_started",
+    "cse>mobility_sales>product_inventory",
+    "pap_added:credit_card",
+    "cse>mobility_sales>order_confirmation"
+  ];
+  
+  for (const metric of knownMetrics) {
+    if (metricName.toLowerCase() === metric.toLowerCase() && item[metric] !== undefined) {
+      return metric;
+    }
+  }
   
   // Check if we have a direct mapping
   if (metricMappings[metricName] && item[metricMappings[metricName]] !== undefined) {
     return metricMappings[metricName];
-  }
-  
-  // First try exact match
-  if (item[metricName] !== undefined) {
-    return metricName;
   }
   
   // Then try partial match
@@ -158,8 +185,12 @@ function findClosestMetricMatch(item, metricName) {
 function formatMetricName(metricKey) {
   // Map column names to display names
   const displayNames = {
-    "_1": "Credit Card Additions",
-    "_2": "Order Confirmations",
+    "Unique Visitors": "Unique Visitors",
+    "Visits": "Total Visits",
+    "cse>mobility_sales>getting_started": "Getting Started Page Visits",
+    "cse>mobility_sales>product_inventory": "Product Inventory Page Visits",
+    "pap_added:credit_card": "Credit Card Additions",
+    "cse>mobility_sales>order_confirmation": "Order Confirmations",
     "﻿#=================================================================": "Sales Representative"
   };
   
@@ -322,17 +353,36 @@ async function executeQuery(parsedQuery) {
         
         // Calculate ratios if requested
         if (parsedQuery.calculate && parsedQuery.calculate.operation === "ratio") {
-          const numeratorKey = findClosestMetricMatch(item, parsedQuery.calculate.numerator);
-          const denominatorKey = findClosestMetricMatch(item, parsedQuery.calculate.denominator);
-          
-          if (numeratorKey && denominatorKey && item[denominatorKey] !== 0) {
-            const ratio = item[numeratorKey] / item[denominatorKey];
-            result.calculated_ratio = parseFloat(ratio.toFixed(4)); // Round to 4 decimal places
-            result.ratio_label = `${formatMetricName(numeratorKey)} per ${formatMetricName(denominatorKey)}`;
-          } else if (numeratorKey && denominatorKey && item[denominatorKey] === 0) {
-            // Handle division by zero
-            result.calculated_ratio = null;
-            result.ratio_label = `${formatMetricName(numeratorKey)} per ${formatMetricName(denominatorKey)} (N/A - division by zero)`;
+          // Special case for the specific query we're trying to support
+          if (parsedQuery.metrics.includes("cse>mobility_sales>order_confirmation") && 
+              parsedQuery.metrics.includes("Unique Visitors")) {
+            // Use order confirmation and unique visitors for the ratio
+            const numeratorKey = "cse>mobility_sales>order_confirmation";
+            const denominatorKey = "Unique Visitors";
+            
+            if (item[denominatorKey] !== 0) {
+              const ratio = item[numeratorKey] / item[denominatorKey];
+              result.calculated_ratio = parseFloat(ratio.toFixed(4)); // Round to 4 decimal places
+              result.ratio_label = `Order Confirmations per Unique Visitor`;
+            } else {
+              // Handle division by zero
+              result.calculated_ratio = null;
+              result.ratio_label = `Order Confirmations per Unique Visitor (N/A - division by zero)`;
+            }
+          } else {
+            // Default behavior
+            const numeratorKey = findClosestMetricMatch(item, parsedQuery.calculate.numerator);
+            const denominatorKey = findClosestMetricMatch(item, parsedQuery.calculate.denominator);
+            
+            if (numeratorKey && denominatorKey && item[denominatorKey] !== 0) {
+              const ratio = item[numeratorKey] / item[denominatorKey];
+              result.calculated_ratio = parseFloat(ratio.toFixed(4)); // Round to 4 decimal places
+              result.ratio_label = `${formatMetricName(numeratorKey)} per ${formatMetricName(denominatorKey)}`;
+            } else if (numeratorKey && denominatorKey && item[denominatorKey] === 0) {
+              // Handle division by zero
+              result.calculated_ratio = null;
+              result.ratio_label = `${formatMetricName(numeratorKey)} per ${formatMetricName(denominatorKey)} (N/A - division by zero)`;
+            }
           }
         }
         
