@@ -1,0 +1,23 @@
+{
+  "gcp": {
+    "project_id": "YOUR_GCP_PROJECT_ID",
+    "location": "YOUR_GCP_LOCATION",
+    "dataset": "YOUR_BIGQUERY_DATASET"
+  },
+  "mcp": {
+    "server_name": "bigquery",
+    "command": "uv",
+    "args": [
+      "--directory",
+      "/Users/dinesh/Documents/Cline/MCP/mcp-server-bigquery",
+      "run",
+      "mcp-server-bigquery",
+      "--project",
+      "YOUR_GCP_PROJECT_ID",
+      "--location",
+      "YOUR_GCP_LOCATION",
+      "--dataset",
+      "YOUR_BIGQUERY_DATASET"
+    ]
+  }
+}

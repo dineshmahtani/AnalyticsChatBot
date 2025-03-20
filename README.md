@@ -1,40 +1,42 @@
 # Analytics Chatbot
 
-A chatbot interface for querying analytics data using natural language. This project allows non-technical users to ask questions about web analytics data and get meaningful responses.
+A chatbot interface for querying Google BigQuery data using natural language.
 
-## Project Overview
+## Overview
 
-This is Phase 1 of an iterative development approach to build an Analytics Chatbot that can:
+The Analytics Chatbot provides a user-friendly interface to interact with your BigQuery datasets. It allows users to:
 
-1. Interpret natural language queries about analytics data
-2. Process and analyze the data
-3. Present results in a user-friendly format
+- List available tables in a dataset
+- View table schemas
+- Execute SQL queries
+- Ask questions in natural language (basic implementation)
 
-The current implementation uses a sample CSV file from Adobe Analytics as the data source. Future phases will expand to include more complex data structures and eventually integrate directly with Adobe Analytics API.
+## Project Structure
 
-## Features
+```
+AnalyticsChatBot/
+├── config/
+│   └── mcp/
+│       └── bigquery-config.json  # BigQuery MCP server configuration
+├── scripts/
+│   └── setup-bigquery-mcp.js     # Script to set up the BigQuery MCP server
+├── src/
+│   ├── services/
+│   │   └── bigquery-service.js   # Service for interacting with BigQuery
+│   ├── app.js                    # Frontend JavaScript
+│   ├── chatbot.js                # Chatbot logic
+│   ├── index.html                # Main HTML page
+│   └── styles.css                # CSS styles
+└── README.md                     # This file
+```
 
-- Natural language query processing (rule-based for demo purposes)
-- CSV data parsing and querying
-- Chat-based user interface
-- Results displayed in formatted tables
-- Query interpretation and explanation
-
-## Tech Stack
-
-- **Frontend**: HTML, CSS, JavaScript
-- **Backend**: Node.js, Express
-- **NLP**: Rule-based query parsing (no API key required for demo)
-- **Data Processing**: CSV parsing and custom query logic
-
-## Getting Started
+## Setup Instructions
 
 ### Prerequisites
 
 - Node.js (v14 or higher)
-- NPM (v6 or higher)
-- Git (for version control)
-- Visual Studio Code (recommended)
+- Google Cloud Platform account with BigQuery access
+- BigQuery dataset
 
 ### Installation
 
@@ -46,101 +48,113 @@ The current implementation uses a sample CSV file from Adobe Analytics as the da
 
 2. Install dependencies:
    ```
-   npm run install-all
+   npm install
    ```
 
-### Using the VS Code Workspace
+3. Configure the BigQuery MCP server:
+   - Update the `config/mcp/bigquery-config.json` file with your GCP project details:
+     ```json
+     {
+       "gcp": {
+         "project_id": "YOUR_GCP_PROJECT_ID",
+         "location": "YOUR_GCP_LOCATION",
+         "dataset": "YOUR_BIGQUERY_DATASET"
+       },
+       "mcp": {
+         "server_name": "bigquery",
+         "command": "uv",
+         "args": [
+           "--directory",
+           "/Users/dinesh/Documents/Cline/MCP/mcp-server-bigquery",
+           "run",
+           "mcp-server-bigquery",
+           "--project",
+           "YOUR_GCP_PROJECT_ID",
+           "--location",
+           "YOUR_GCP_LOCATION",
+           "--dataset",
+           "YOUR_BIGQUERY_DATASET"
+         ]
+       }
+     }
+     ```
 
-A VS Code workspace file has been created to make development easier:
-
-1. Open VS Code
-2. Go to File > Open Workspace from File...
-3. Navigate to `/Users/dinesh/Desktop/AnalyticsChatBot.code-workspace` and open it
-
-The workspace includes:
-- Recommended extensions
-- Debugging configurations
-- Project-specific settings
-
-### Creating Checkpoints (Git Commits)
-
-To save your progress and create checkpoints:
-
-1. Stage your changes:
+4. Run the setup script to configure the MCP server:
    ```
-   git add <files-to-commit>
-   ```
-
-2. Create a checkpoint (commit):
-   ```
-   git commit -m "Descriptive message about your changes"
-   ```
-
-3. View your checkpoint history:
-   ```
-   git log --oneline
-   ```
-
-### Running the Application
-
-1. Start the server:
-   ```
-   npm start
+   node scripts/setup-bigquery-mcp.js
    ```
 
-2. Open your browser and navigate to:
+5. Start the application:
    ```
-   http://localhost:3000
+   cd src
+   open index.html
    ```
 
-## Sample Queries
+## Usage
 
-Try asking questions like:
+### Web Interface
 
-- "Which sales rep has the most visits?"
-- "Show me the top 5 sales reps by credit card additions"
-- "What are the metrics for boutique telus?"
-- "Compare visits and credit card additions for the top sales reps"
+The web interface provides a chat-like experience for interacting with your BigQuery data:
 
-## Project Structure
+1. **Configuration Panel**: Enter your GCP project details in the configuration panel on the right side of the screen.
 
-```
-AnalyticsChatBot/
-├── client/                  # Frontend
-│   ├── components/          # UI components
-│   │   └── results.js       # Results display component
-│   ├── index.html           # Main HTML page
-│   ├── styles.css           # Styling
-│   └── app.js               # Frontend logic
-├── data/                    # Sample data
-│   └── telus_analytics_sample.csv  # Sample CSV data
-├── server/                  # Backend
-│   ├── routes/              # API routes
-│   │   └── api.js           # API endpoints
-│   ├── services/            # Business logic
-│   │   ├── nlp.js           # Natural language processing
-│   │   └── queryProcessor.js # Data query logic
-│   └── index.js             # Server entry point
-└── README.md                # Project documentation
-```
+2. **Chat Interface**: Use the chat input at the bottom of the screen to ask questions about your data.
 
-## Future Enhancements (Planned Phases)
+### Example Queries
 
-### Phase 2: Expanded Data Variability
-- Support for more complex data structures
-- Advanced query capabilities
-- Data visualization components
+- **List tables**: "List all tables" or "Show tables"
+- **View schema**: "Show schema of table_name" or "What's the structure of table_name?"
+- **Execute query**: "SELECT * FROM table_name LIMIT 10"
+- **Natural language**: "Show me the top 10 records from table_name"
 
-### Phase 3: Chatbot Experience
-- Enhanced conversation context
-- Follow-up questions
-- Improved UI/UX
+## Updating GCP Configuration
 
-### Phase 4: Adobe Analytics Integration
-- Direct connection to Adobe Analytics API
-- Real-time data access
-- Advanced analytics capabilities
+When you receive your GCP dataset details, you'll need to update the configuration:
+
+1. Edit the `config/mcp/bigquery-config.json` file with your actual GCP details:
+   - `project_id`: Your GCP project ID
+   - `location`: The location of your BigQuery dataset (e.g., "us-central1")
+   - `dataset`: The name of your BigQuery dataset
+
+2. Run the setup script to update the MCP server configuration:
+   ```
+   node scripts/setup-bigquery-mcp.js
+   ```
+
+3. Restart VS Code to apply the changes.
+
+4. You can also update the configuration through the web interface by entering your GCP details in the configuration panel.
+
+## Development
+
+### Adding New Features
+
+To extend the chatbot's capabilities:
+
+1. **Enhance Natural Language Processing**: Modify the `processQuery` method in `src/chatbot.js` to handle more complex queries.
+
+2. **Add New Query Types**: Extend the `BigQueryService` class in `src/services/bigquery-service.js` with additional methods for specific query types.
+
+3. **Improve UI**: Enhance the user interface in `src/index.html` and `src/styles.css`.
+
+### Testing
+
+The project includes mock data for testing without a live BigQuery connection. To test with real data:
+
+1. Configure your GCP details as described in the "Updating GCP Configuration" section.
+
+2. Modify the `BigQueryService` class to use the actual MCP tool calls instead of the mock data.
+
+## Troubleshooting
+
+### Common Issues
+
+- **MCP Server Not Connected**: Ensure the MCP server is properly configured and VS Code has been restarted.
+
+- **Authentication Errors**: Verify your GCP credentials and project access permissions.
+
+- **Query Errors**: Check your SQL syntax and ensure the tables you're querying exist in your dataset.
 
 ## License
 
-This project is licensed under the ISC License.
+This project is licensed under the MIT License - see the LICENSE file for details.

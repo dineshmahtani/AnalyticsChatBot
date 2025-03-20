@@ -1,0 +1,65 @@
+﻿#=================================================================
+# Freeform
+# Report suite: TELUS Global Production
+"# Date: Mar 1, 2025 - Mar 31, 2025"
+#=================================================================
+
+
+##############################################
+# Freeform table
+##############################################
+,Unique Visitors,Visits,Visits,cse>mobility_sales>getting_started,cse>mobility_sales>product_inventory,pap_added:credit_card,cse>mobility_sales>order_confirmation
+,Unique Visitors,Visits,Visits,Visits,Visits,Visits,Visits
+Dealer Legal Name (v183),65875,186560,186560,99376,1419,5858,39732
+boutique_telus_/_boutique_koodo,36344,45815,45815,23488,385,2708,11069
+client_operations,4608,28330,28330,15129,599,0,5826
+small_business_solutions_outbound,1993,18842,18842,6532,96,0,3626
+wal-mart_canada_corp./la_compagnie_wal-mart_du_canada,4296,7597,7597,4472,0,485,1695
+css_outbound,1019,7433,7433,5397,87,0,1573
+tom_harris_cellular_ltd.,1219,4514,4514,1822,11,100,1158
+match_transact_inc.,1640,5258,5258,3712,0,624,1065
+ce_koodo_inbound,1759,8116,8116,4422,40,0,961
+pacific_coastcom_communications_inc.,558,2479,2479,985,0,115,649
+normand_nadeau_t.v._inc.,849,2113,2113,792,8,93,577
+css_inbound,311,2645,2645,2175,45,0,573
+andre's_t.v._sales_&_service_ltd.,434,1936,1936,762,2,68,567
+g.b.s._communications_inc.,372,2125,2125,820,4,56,532
+4l_communications_inc.,297,2152,2152,790,0,56,529
+custom_communications_(1990)_corp.,534,1774,1774,598,13,27,493
+css_koodo_outbound,1030,5916,5916,3309,22,0,485
+9114-9534_québec_inc.,244,1837,1837,795,5,108,485
+d2_technologie_inc.,283,2063,2063,695,3,57,434
+0945286_bc_ltd._o/a_the_acquisition_group,863,1780,1780,1753,2,51,430
+mobile_service_center_canada_limited,753,2961,2961,2416,0,219,430
+m1_innovations_inc.,759,1817,1817,1802,1,27,417
+smart-cell_communications_inc.,243,1447,1447,544,4,27,400
+master_com._inc.,288,2508,2508,1252,5,136,377
+gatto_bros_inc.,233,1478,1478,757,3,94,306
+oc_open_connection_ltd.,279,1414,1414,632,5,70,273
+radio-onde_inc.,182,943,943,341,0,32,263
+csd_technicians,897,1452,1452,1418,6,109,249
+ralcomm_ltd.,163,653,653,245,1,20,194
+apple_canada_inc.,456,729,729,174,0,11,145
+centre_électronique_st-siméon_inc.,81,451,451,139,2,20,143
+apex_communications_inc.,90,399,399,162,0,1,129
+wireless_web_channel,126,982,982,920,0,0,126
+sky_wireless_communications_inc.,29,355,355,176,1,18,120
+all_canadian_network_solutions_inc.,245,763,763,651,17,59,113
+tmi,902,1804,1804,1164,0,0,103
+sd_telecom_inc.,83,351,351,347,0,18,103
+connect_6_group_inc.,257,775,775,769,0,65,101
+2206765_ontario_inc.,46,403,403,242,0,10,99
+communication_zone_inc.,51,397,397,158,0,10,98
+multicom_communication_2000_inc.,48,263,263,94,0,11,89
+bolt_wireless_inc.,241,586,586,407,4,30,81
+9058-2396_quebec_inc.,109,288,288,73,0,17,75
+wireless_city_inc.,29,287,287,115,1,4,75
+parlez_wireless_inc.,98,357,357,147,2,17,72
+1070432_ontario_ltd.,14,219,219,63,1,7,72
+ejlvg_holdings_ltd.,13,231,231,71,0,4,70
+computer_remedies_ltd.,31,274,274,124,1,20,67
+les_entreprises_gilles_plamondon_ltee,18,177,177,50,0,9,62
+go_sales_licensing_inc,183,353,353,349,0,2,60
+ce_mobile_and_home,128,251,251,204,3,0,58
+
+

@@ -1,0 +1,65 @@
+﻿#=================================================================
+# Freeform
+# Report suite: TELUS Global Production
+"# Date: Mar 1, 2025 - Mar 31, 2025"
+#=================================================================
+
+
+##############################################
+# Freeform table
+##############################################
+,pap_added:credit_card,cse>mobility_sales>order_confirmation
+,Visits,Visits
+Dealer Legal Name (v183),5209,34655
+boutique_telus_/_boutique_koodo,2411,9780
+client_operations,0,5041
+small_business_solutions_outbound,0,3106
+wal-mart_canada_corp./la_compagnie_wal-mart_du_canada,431,1502
+css_outbound,0,1287
+tom_harris_cellular_ltd.,88,992
+match_transact_inc.,579,984
+ce_koodo_inbound,0,836
+pacific_coastcom_communications_inc.,103,573
+normand_nadeau_t.v._inc.,82,521
+andre's_t.v._sales_&_service_ltd.,58,493
+css_inbound,0,490
+g.b.s._communications_inc.,50,471
+4l_communications_inc.,48,461
+9114-9534_québec_inc.,93,433
+custom_communications_(1990)_corp.,25,426
+css_koodo_outbound,0,409
+d2_technologie_inc.,50,382
+mobile_service_center_canada_limited,197,374
+0945286_bc_ltd._o/a_the_acquisition_group,39,367
+smart-cell_communications_inc.,26,360
+m1_innovations_inc.,21,339
+master_com._inc.,118,333
+gatto_bros_inc.,85,279
+oc_open_connection_ltd.,66,247
+radio-onde_inc.,27,232
+csd_technicians,96,215
+ralcomm_ltd.,19,163
+centre_électronique_st-siméon_inc.,16,132
+apple_canada_inc.,10,129
+wireless_web_channel,0,115
+apex_communications_inc.,1,113
+all_canadian_network_solutions_inc.,52,105
+sky_wireless_communications_inc.,17,103
+tmi,0,95
+sd_telecom_inc.,15,91
+2206765_ontario_inc.,10,85
+connect_6_group_inc.,58,83
+communication_zone_inc.,9,80
+multicom_communication_2000_inc.,10,78
+bolt_wireless_inc.,28,73
+9058-2396_quebec_inc.,12,65
+parlez_wireless_inc.,16,63
+wireless_city_inc.,2,63
+ejlvg_holdings_ltd.,4,62
+1070432_ontario_ltd.,6,59
+computer_remedies_ltd.,17,57
+les_entreprises_gilles_plamondon_ltee,7,55
+ce_mobile_and_home,0,55
+globe_mobilite_inc.,5,48
+
+

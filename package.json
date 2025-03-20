@@ -1,13 +1,34 @@
 {
   "name": "analytics-chatbot",
-  "version": "0.1.0",
-  "description": "Chatbot for querying analytics data",
+  "version": "1.0.0",
+  "description": "A chatbot interface for querying Google BigQuery data using natural language",
+  "main": "src/app.js",
   "scripts": {
-    "start": "cd server && npm start",
-    "dev": "cd server && npm run dev",
-    "install-all": "npm install && cd server && npm install",
-    "test": "cd server && npm test"
+    "start": "open src/index.html",
+    "setup-mcp": "node scripts/setup-bigquery-mcp.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dineshmahtani/AnalyticsChatBot.git"
+  },
+  "keywords": [
+    "chatbot",
+    "analytics",
+    "bigquery",
+    "mcp",
+    "google-cloud"
+  ],
+  "author": "Dinesh Mahtani",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dineshmahtani/AnalyticsChatBot/issues"
+  },
+  "homepage": "https://github.com/dineshmahtani/AnalyticsChatBot#readme",
+  "dependencies": {
+    "fs": "0.0.1-security",
+    "path": "^0.12.7",
+    "os": "^0.1.2"
+  },
+  "devDependencies": {}
 }
