@@ -79,14 +79,150 @@ async function parseQuery(query) {
       }
     }
     
-    // Check for statistical calculation requests
-    if (lowerQuery.includes("average") || 
-        lowerQuery.includes("mean") || 
-        lowerQuery.includes("median") || 
-        lowerQuery.includes("standard deviation") || 
-        lowerQuery.includes("variance") || 
-        lowerQuery.includes("correlation")) {
+    // First check if the query contains both statistical and ratio terms
+    const hasStatisticalTerm = lowerQuery.includes("average") || 
+                              lowerQuery.includes("mean") || 
+                              lowerQuery.includes("median") || 
+                              lowerQuery.includes("standard deviation") || 
+                              lowerQuery.includes("variance") || 
+                              lowerQuery.includes("correlation");
+    
+    const hasRatioTerm = lowerQuery.includes("ratio") || 
+                         lowerQuery.includes("divide") || 
+                         lowerQuery.includes("per") || 
+                         lowerQuery.match(/([a-z\s]+)\s+by\s+([a-z\s]+)/);
+    
+    // Check for combined statistical operation on ratio
+    if (hasStatisticalTerm && hasRatioTerm) {
+      // Determine the statistical operation
+      let operation = "mean"; // Default
       
+      if (lowerQuery.includes("median")) {
+        operation = "median";
+      } else if (lowerQuery.includes("standard deviation") || lowerQuery.includes("std dev")) {
+        operation = "standardDeviation";
+      } else if (lowerQuery.includes("variance")) {
+        operation = "variance";
+      }
+      
+      // Extract ratio metrics
+      let numerator = "pap_added:credit_card"; // Default
+      let denominator = "visits"; // Default
+      
+      // Try to extract the specific metrics mentioned for the ratio
+      const ratioPattern1 = /ratio\s+of\s+([a-z\s>:_]+)\s+to\s+([a-z\s>:_]+)/i;
+      const ratioPattern2 = /([a-z\s>:_]+)\s+divided\s+by\s+([a-z\s>:_]+)/i;
+      const ratioPattern3 = /([a-z\s>:_]+)\s+per\s+([a-z\s>:_]+)/i;
+      const ratioPattern4 = /([a-z\s>:_]+)\s+by\s+([a-z\s>:_]+)/i;
+      
+      let match = lowerQuery.match(ratioPattern1) || 
+                  lowerQuery.match(ratioPattern2) || 
+                  lowerQuery.match(ratioPattern3) || 
+                  lowerQuery.match(ratioPattern4);
+      
+      if (match) {
+        // Extract the metric names from the query
+        const numeratorText = match[1].trim();
+        const denominatorText = match[2].trim();
+        
+        // First check if the extracted terms are exact metric names
+        const allMetrics = [
+          "Unique Visitors",
+          "Visits",
+          "cse>mobility_sales>getting_started",
+          "cse>mobility_sales>product_inventory",
+          "pap_added:credit_card",
+          "cse>mobility_sales>order_confirmation"
+        ];
+        
+        // Check for exact matches first (case insensitive)
+        allMetrics.forEach(metric => {
+          if (numeratorText.toLowerCase() === metric.toLowerCase()) {
+            numerator = metric;
+          }
+          if (denominatorText.toLowerCase() === metric.toLowerCase()) {
+            denominator = metric;
+          }
+        });
+        
+        // Also check if the extracted terms contain the exact metric names
+        allMetrics.forEach(metric => {
+          if (numeratorText.toLowerCase().includes(metric.toLowerCase())) {
+            numerator = metric;
+          }
+          if (denominatorText.toLowerCase().includes(metric.toLowerCase())) {
+            denominator = metric;
+          }
+        });
+        
+        // Apply term mapping for partial matches
+        Object.keys(metricMappings).forEach(term => {
+          if (numeratorText.includes(term)) {
+            numerator = metricMappings[term];
+          }
+          if (denominatorText.includes(term)) {
+            denominator = metricMappings[term];
+          }
+        });
+        
+        // Special handling for common terms
+        if (numeratorText.includes("order") || numeratorText.includes("confirmation")) {
+          numerator = "cse>mobility_sales>order_confirmation";
+        }
+        if (denominatorText.includes("order") || denominatorText.includes("confirmation")) {
+          denominator = "cse>mobility_sales>order_confirmation";
+        }
+        if (numeratorText.includes("product") || numeratorText.includes("inventory")) {
+          numerator = "cse>mobility_sales>product_inventory";
+        }
+        if (denominatorText.includes("product") || denominatorText.includes("inventory")) {
+          denominator = "cse>mobility_sales>product_inventory";
+        }
+        if (numeratorText.includes("visit") || numeratorText.includes("traffic")) {
+          numerator = "Visits";
+        }
+        if (denominatorText.includes("visit") || denominatorText.includes("traffic")) {
+          denominator = "Visits";
+        }
+      }
+      
+      // Special case for product inventory and order confirmation
+      if ((lowerQuery.includes("product") || lowerQuery.includes("inventory")) && 
+          (lowerQuery.includes("order") || lowerQuery.includes("confirmation"))) {
+        // Check which one appears first to determine numerator/denominator
+        const productIndex = Math.min(
+          lowerQuery.indexOf("product") >= 0 ? lowerQuery.indexOf("product") : Infinity,
+          lowerQuery.indexOf("inventory") >= 0 ? lowerQuery.indexOf("inventory") : Infinity
+        );
+        
+        const orderIndex = Math.min(
+          lowerQuery.indexOf("order") >= 0 ? lowerQuery.indexOf("order") : Infinity,
+          lowerQuery.indexOf("confirmation") >= 0 ? lowerQuery.indexOf("confirmation") : Infinity
+        );
+        
+        if (productIndex < orderIndex) {
+          numerator = "cse>mobility_sales>product_inventory";
+          denominator = "cse>mobility_sales>order_confirmation";
+        } else {
+          numerator = "cse>mobility_sales>order_confirmation";
+          denominator = "cse>mobility_sales>product_inventory";
+        }
+      }
+      
+      // Create a combined statistical ratio operation
+      result.calculate = {
+        type: "statistical_ratio",
+        operation: operation,
+        numerator: numerator,
+        denominator: denominator
+      };
+      
+      // Make sure both metrics are included
+      if (!metrics.includes(numerator)) metrics.push(numerator);
+      if (!metrics.includes(denominator)) metrics.push(denominator);
+    }
+    // Check for regular statistical calculation requests (without ratio)
+    else if (hasStatisticalTerm) {
       // Determine the statistical operation
       let operation = "mean"; // Default
       
@@ -130,7 +266,7 @@ async function parseQuery(query) {
         metrics.push(result.calculate.secondMetric);
       }
     }
-    // Check for ratio/calculation requests
+    // Check for regular ratio/calculation requests (without statistical operation)
     else if (lowerQuery.includes("ratio") || 
         lowerQuery.includes("divide") || 
         lowerQuery.includes("per") || 
@@ -140,11 +276,43 @@ async function parseQuery(query) {
       let numerator = "pap_added:credit_card";
       let denominator = "visits";
       
-      // Special case for the specific query we're trying to support
-      if (lowerQuery.includes("cse>mobility_sales>order_confirmation") && 
-          lowerQuery.includes("unique visitors")) {
-        numerator = "cse>mobility_sales>order_confirmation";
-        denominator = "Unique Visitors";
+        // Special cases for specific queries with exact metric names
+        if (lowerQuery.includes("cse>mobility_sales>order_confirmation") && 
+            lowerQuery.includes("cse>mobility_sales>getting_started")) {
+          // Check if order_confirmation is the numerator or denominator
+          if (lowerQuery.indexOf("cse>mobility_sales>order_confirmation") < lowerQuery.indexOf("cse>mobility_sales>getting_started")) {
+            numerator = "cse>mobility_sales>order_confirmation";
+            denominator = "cse>mobility_sales>getting_started";
+          } else {
+            numerator = "cse>mobility_sales>getting_started";
+            denominator = "cse>mobility_sales>order_confirmation";
+          }
+        } else if (lowerQuery.includes("cse>mobility_sales>order_confirmation") && 
+            lowerQuery.includes("unique visitors")) {
+          numerator = "cse>mobility_sales>order_confirmation";
+          denominator = "Unique Visitors";
+        } 
+        // Special case for order confirmations to visits ratio
+        else if ((lowerQuery.includes("order") || lowerQuery.includes("confirmation")) && 
+                 (lowerQuery.includes("visit") || lowerQuery.includes("traffic"))) {
+          // Check if order/confirmation appears before visit/traffic
+          const orderIndex = Math.min(
+            lowerQuery.indexOf("order") >= 0 ? lowerQuery.indexOf("order") : Infinity,
+            lowerQuery.indexOf("confirmation") >= 0 ? lowerQuery.indexOf("confirmation") : Infinity
+          );
+          
+          const visitIndex = Math.min(
+            lowerQuery.indexOf("visit") >= 0 ? lowerQuery.indexOf("visit") : Infinity,
+            lowerQuery.indexOf("traffic") >= 0 ? lowerQuery.indexOf("traffic") : Infinity
+          );
+          
+          if (orderIndex < visitIndex) {
+            numerator = "cse>mobility_sales>order_confirmation";
+            denominator = "Visits";
+          } else {
+            numerator = "Visits";
+            denominator = "cse>mobility_sales>order_confirmation";
+          }
       } else {
         // Try to extract the specific metrics mentioned
         // Pattern: "ratio of X to Y" or "X divided by Y" or "X per Y" or "X by Y"
@@ -195,16 +363,28 @@ async function parseQuery(query) {
             }
           });
           
-          // If no exact matches, try to map the extracted terms to metrics using partial matches
-          if (numerator === "pap_added:credit_card" && denominator === "visits") {
-            Object.keys(metricMappings).forEach(term => {
-              if (numeratorText.includes(term)) {
-                numerator = metricMappings[term];
-              }
-              if (denominatorText.includes(term)) {
-                denominator = metricMappings[term];
-              }
-            });
+          // Apply term mapping for partial matches regardless of current values
+          Object.keys(metricMappings).forEach(term => {
+            if (numeratorText.includes(term)) {
+              numerator = metricMappings[term];
+            }
+            if (denominatorText.includes(term)) {
+              denominator = metricMappings[term];
+            }
+          });
+          
+          // Special handling for common terms
+          if (numeratorText.includes("order") || numeratorText.includes("confirmation")) {
+            numerator = "cse>mobility_sales>order_confirmation";
+          }
+          if (denominatorText.includes("order") || denominatorText.includes("confirmation")) {
+            denominator = "cse>mobility_sales>order_confirmation";
+          }
+          if (numeratorText.includes("visit") || numeratorText.includes("traffic")) {
+            numerator = "Visits";
+          }
+          if (denominatorText.includes("visit") || denominatorText.includes("traffic")) {
+            denominator = "Visits";
           }
         }
       }

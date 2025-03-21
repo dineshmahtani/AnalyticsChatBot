@@ -1,7 +1,59 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // Restructure the main container to support memory panel
+  const mainElement = document.querySelector('main');
+  
+  // Create app container
+  const appContainer = document.createElement('div');
+  appContainer.className = 'app-container';
+  
+  // Create chat wrapper
+  const chatWrapper = document.createElement('div');
+  chatWrapper.className = 'chat-wrapper';
+  
+  // Move chat container into chat wrapper
+  const chatContainer = document.querySelector('.chat-container');
+  if (chatContainer) {
+    chatWrapper.appendChild(chatContainer);
+  }
+  
+  // Add chat wrapper to app container
+  appContainer.appendChild(chatWrapper);
+  
+  // Add app container to main
+  mainElement.appendChild(appContainer);
+  
+  // Initialize variables
   const queryForm = document.getElementById('query-form');
   const queryInput = document.getElementById('query-input');
   const chatMessages = document.getElementById('chat-messages');
+  
+  // Initialize memory component
+  const memoryComponent = initMemoryComponent({
+    container: appContainer,
+    onQuerySelect: (query, interactionId) => {
+      // Set the query input value
+      queryInput.value = query;
+      
+      // Focus the input
+      queryInput.focus();
+      
+      // Optionally submit the form automatically
+      // queryForm.dispatchEvent(new Event('submit'));
+    },
+    onClearMemory: async () => {
+      const confirmed = confirm('Are you sure you want to clear your memory? This will delete all your conversation history.');
+      
+      if (confirmed) {
+        const success = await memoryComponent.clearMemory();
+        
+        if (success) {
+          addMessage('Memory has been cleared.', 'bot');
+        } else {
+          addMessage('Failed to clear memory. Please try again.', 'bot');
+        }
+      }
+    }
+  });
   
   // Add event listener for form submission
   queryForm.addEventListener('submit', async (e) => {
@@ -20,13 +72,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadingId = addLoadingMessage();
     
     try {
-      // Send query to API
+      // Update related queries in memory panel
+      await memoryComponent.updateRelatedQueries(query);
+      
+      // Send query to API with user ID
       const response = await fetch('/api/query', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ query })
+        body: JSON.stringify({ 
+          query,
+          userId: memoryComponent.getUserId()
+        })
       });
       
       if (!response.ok) {
@@ -40,6 +98,14 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Display results
       displayResults(data.results);
+      
+      // Display related queries if available
+      if (data.relatedInteractions && data.relatedInteractions.length > 0) {
+        displayRelatedQueries(data.relatedInteractions);
+      }
+      
+      // Refresh memory panel
+      memoryComponent.refresh();
       
     } catch (error) {
       console.error('Error:', error);
@@ -145,8 +211,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Create a response with query interpretation and results
     let responseHtml = '';
     
-    // Add query interpretation if available
-    if (query.intent) {
+    // Add query interpretation if available from the API response
+    if (results.interpretation) {
+      responseHtml += `<div class="query-interpretation">I understood you wanted to ${results.interpretation}</div>`;
+    }
+    // Fallback to basic intent display if no interpretation is available
+    else if (query.intent) {
       const intentDisplay = query.intent === 'compare_top_bottom' ? 
         'compare top and bottom results' : 
         query.intent.replace(/_/g, ' ');
@@ -208,6 +278,68 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Add the response to the chat
     addMessage({ html: responseHtml }, 'bot');
+  }
+  
+  /**
+   * Display related queries in the chat
+   * @param {Array} relatedInteractions - Related interactions
+   */
+  function displayRelatedQueries(relatedInteractions) {
+    if (!relatedInteractions || relatedInteractions.length === 0) {
+      return;
+    }
+    
+    // Create container for related queries
+    const relatedQueriesDiv = document.createElement('div');
+    relatedQueriesDiv.className = 'message bot';
+    
+    const relatedQueriesContent = document.createElement('div');
+    relatedQueriesContent.className = 'message-content';
+    
+    // Create related queries HTML
+    let relatedQueriesHtml = `
+      <div class="related-queries-container">
+        <div class="related-queries-title">Related Queries:</div>
+    `;
+    
+    relatedInteractions.forEach(interaction => {
+      relatedQueriesHtml += `
+        <span class="related-query-item" data-id="${interaction.id}">${interaction.query}</span>
+      `;
+    });
+    
+    relatedQueriesHtml += '</div>';
+    
+    relatedQueriesContent.innerHTML = relatedQueriesHtml;
+    relatedQueriesDiv.appendChild(relatedQueriesContent);
+    chatMessages.appendChild(relatedQueriesDiv);
+    
+    // Add event listeners to related query items
+    const relatedQueryItems = relatedQueriesDiv.querySelectorAll('.related-query-item');
+    relatedQueryItems.forEach(item => {
+      item.addEventListener('click', () => {
+        const query = item.textContent;
+        const interactionId = item.getAttribute('data-id');
+        
+        // Set the query input value
+        queryInput.value = query;
+        
+        // Mark as referenced
+        if (interactionId) {
+          fetch(`/api/memory/reference/${interactionId}`, {
+            method: 'POST'
+          }).catch(error => {
+            console.error('Error marking interaction as referenced:', error);
+          });
+        }
+        
+        // Submit the form
+        queryForm.dispatchEvent(new Event('submit'));
+      });
+    });
+    
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
   }
   
   /**

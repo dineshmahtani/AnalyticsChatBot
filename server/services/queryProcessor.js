@@ -233,8 +233,93 @@ async function executeQuery(parsedQuery) {
       // Apply other filters if needed
     }
     
-    // Handle statistical calculations
-    if (parsedQuery.calculate && parsedQuery.calculate.type === "statistical") {
+    // Handle statistical calculations on ratios
+    if (parsedQuery.calculate && parsedQuery.calculate.type === "statistical_ratio") {
+      const operation = parsedQuery.calculate.operation;
+      const numerator = parsedQuery.calculate.numerator;
+      const denominator = parsedQuery.calculate.denominator;
+      
+      // First calculate the ratio for each item
+      const ratioValues = filteredData.map(item => {
+        const numeratorKey = findClosestMetricMatch(item, numerator);
+        const denominatorKey = findClosestMetricMatch(item, denominator);
+        
+        if (numeratorKey && denominatorKey && item[denominatorKey] !== 0) {
+          return item[numeratorKey] / item[denominatorKey];
+        }
+        return null;
+      }).filter(value => value !== null);
+      
+      // Calculate the statistical measure on the ratio values
+      let statResult;
+      let statDescription = '';
+      
+      switch (operation) {
+        case "mean":
+          statResult = ss.mean(ratioValues);
+          statDescription = `The average ratio of ${formatMetricName(numerator)} to ${formatMetricName(denominator)} across all ${ratioValues.length} sales reps is ${statResult.toFixed(4)}.`;
+          break;
+        case "median":
+          statResult = ss.median(ratioValues);
+          statDescription = `The median ratio of ${formatMetricName(numerator)} to ${formatMetricName(denominator)} across all ${ratioValues.length} sales reps is ${statResult.toFixed(4)}.`;
+          break;
+        case "standardDeviation":
+          statResult = ss.standardDeviation(ratioValues);
+          statDescription = `The standard deviation of the ratio of ${formatMetricName(numerator)} to ${formatMetricName(denominator)} is ${statResult.toFixed(4)}, indicating the typical variation from the average.`;
+          break;
+        case "variance":
+          statResult = ss.variance(ratioValues);
+          statDescription = `The variance of the ratio of ${formatMetricName(numerator)} to ${formatMetricName(denominator)} is ${statResult.toFixed(4)}.`;
+          break;
+        default:
+          statResult = ss.mean(ratioValues);
+          statDescription = `The average ratio of ${formatMetricName(numerator)} to ${formatMetricName(denominator)} is ${statResult.toFixed(4)}.`;
+      }
+      
+      // Calculate the ratio for each item to include in the results
+      const resultsWithRatio = filteredData.slice(0, 10).map(item => {
+        const result = { salesRep: item.salesRep };
+        
+        // Include the original metrics
+        const numeratorKey = findClosestMetricMatch(item, numerator);
+        const denominatorKey = findClosestMetricMatch(item, denominator);
+        
+        if (numeratorKey) {
+          result[numeratorKey] = item[numeratorKey];
+        }
+        if (denominatorKey) {
+          result[denominatorKey] = item[denominatorKey];
+        }
+        
+        // Calculate the ratio
+        if (numeratorKey && denominatorKey && item[denominatorKey] !== 0) {
+          const ratio = item[numeratorKey] / item[denominatorKey];
+          result.calculated_ratio = parseFloat(ratio.toFixed(4));
+          result.ratio_label = `${formatMetricName(numeratorKey)} per ${formatMetricName(denominatorKey)}`;
+        } else {
+          result.calculated_ratio = null;
+          result.ratio_label = `${formatMetricName(numeratorKey)} per ${formatMetricName(denominatorKey)} (N/A)`;
+        }
+        
+        return result;
+      });
+      
+      // Return the statistical result with the ratio data
+      return {
+        query: parsedQuery,
+        results: resultsWithRatio,
+        statistics: {
+          operation: operation,
+          numerator: numerator,
+          denominator: denominator,
+          value: statResult,
+          description: statDescription,
+          sampleSize: ratioValues.length
+        }
+      };
+    }
+    // Handle regular statistical calculations
+    else if (parsedQuery.calculate && parsedQuery.calculate.type === "statistical") {
       const operation = parsedQuery.calculate.operation;
       const metric = parsedQuery.calculate.metric;
       
@@ -500,8 +585,71 @@ async function executeQuery(parsedQuery) {
   }
 }
 
+/**
+ * Generate a human-readable interpretation of the parsed query
+ * @param {Object} parsedQuery - The parsed query parameters
+ * @returns {string} Human-readable interpretation
+ */
+function generateQueryInterpretation(parsedQuery) {
+  let interpretation = "";
+  
+  // Interpret the intent
+  if (parsedQuery.intent === "get_metric") {
+    interpretation = "get metrics";
+  } else if (parsedQuery.intent === "find_top") {
+    interpretation = `find top ${parsedQuery.limit || 5} results`;
+  } else if (parsedQuery.intent === "find_bottom") {
+    interpretation = `find bottom ${parsedQuery.limit || 5} results`;
+  } else if (parsedQuery.intent === "compare_top_bottom") {
+    interpretation = `compare top and bottom ${parsedQuery.topBottomLimit || 3} results`;
+  } else if (parsedQuery.intent === "compare") {
+    interpretation = "compare metrics";
+  }
+  
+  // Add calculation interpretation
+  if (parsedQuery.calculate) {
+    if (parsedQuery.calculate.type === "statistical") {
+      const operation = parsedQuery.calculate.operation;
+      const metric = formatMetricName(parsedQuery.calculate.metric);
+      
+      if (operation === "correlation") {
+        const secondMetric = formatMetricName(parsedQuery.calculate.secondMetric);
+        interpretation += ` with correlation between ${metric} and ${secondMetric}`;
+      } else {
+        interpretation += ` with ${operation} of ${metric}`;
+      }
+    } else if (parsedQuery.calculate.type === "statistical_ratio") {
+      const operation = parsedQuery.calculate.operation;
+      const numerator = formatMetricName(parsedQuery.calculate.numerator);
+      const denominator = formatMetricName(parsedQuery.calculate.denominator);
+      
+      interpretation += ` with ${operation} of the ratio of ${numerator} to ${denominator}`;
+    } else if (parsedQuery.calculate.operation === "ratio") {
+      const numerator = formatMetricName(parsedQuery.calculate.numerator);
+      const denominator = formatMetricName(parsedQuery.calculate.denominator);
+      
+      interpretation += ` with ratio of ${numerator} to ${denominator}`;
+    }
+  }
+  
+  // Add filter interpretation
+  if (parsedQuery.filters && parsedQuery.filters.salesRep) {
+    interpretation += ` for sales rep "${parsedQuery.filters.salesRep}"`;
+  }
+  
+  // Add "whole dataset" context if no filters and not top/bottom
+  if ((!parsedQuery.filters || Object.keys(parsedQuery.filters).length === 0) && 
+      parsedQuery.intent === "get_metric" &&
+      (!parsedQuery.limit || parsedQuery.limit > 20)) {
+    interpretation += " across the whole dataset";
+  }
+  
+  return interpretation;
+}
+
 module.exports = {
   loadData,
   getMetadata,
-  executeQuery
+  executeQuery,
+  generateQueryInterpretation
 };
