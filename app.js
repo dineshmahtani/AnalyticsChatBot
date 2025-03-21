@@ -1,11 +1,11 @@
 /**
- * Analytics Chatbot Frontend (Static Version for GitHub Pages)
+ * Analytics Chatbot Frontend (Static GitHub Pages Version)
  * 
  * This script handles the frontend functionality of the Analytics Chatbot,
- * including user interactions and message display.
+ * including user interactions and message display for the static demo.
  */
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
   // DOM Elements
   const chatForm = document.getElementById('chat-form');
   const userInput = document.getElementById('user-input');
@@ -19,8 +19,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Configuration state
   let config = {
     bigQuery: {
-      projectId: localStorage.getItem('bq_project_id') || 'local-testing',
-      location: localStorage.getItem('bq_location') || 'local',
+      projectId: localStorage.getItem('bq_project_id') || 'demo-project',
+      location: localStorage.getItem('bq_location') || 'us-central1',
       dataset: localStorage.getItem('bq_dataset') || 'telus_analytics'
     }
   };
@@ -77,35 +77,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateConfigStatus();
     
     // Notify user
-    addMessage('Configuration updated successfully!', 'bot');
+    addMessage('Configuration updated successfully! (Note: This is a static demo, so no actual connection is made)', 'bot');
   }
 
   /**
    * Update the configuration status display
    */
   function updateConfigStatus() {
-    // Always show as configured when using local data
-    const isLocalData = config.bigQuery.projectId === 'local-testing' || 
-                        config.bigQuery.location === 'local' || 
-                        config.bigQuery.dataset === 'telus_analytics';
-    
-    const isConfigured = isLocalData || (
-      config.bigQuery.projectId && 
-      config.bigQuery.location && 
-      config.bigQuery.dataset
-    );
-    
-    if (isConfigured) {
-      if (isLocalData) {
-        configStatus.textContent = 'Using Local Data';
-      } else {
-        configStatus.textContent = 'Configured';
-      }
-      configStatus.classList.add('configured');
-    } else {
-      configStatus.textContent = 'Not Configured';
-      configStatus.classList.remove('configured');
-    }
+    configStatus.textContent = 'Demo Mode';
+    configStatus.classList.add('configured');
   }
 
   /**
@@ -264,10 +244,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   /**
-   * Process a user message (Static version for GitHub Pages)
+   * Process a user message for the static demo
    * @param {string} message - User message
    */
-  async function processMessage(message) {
+  function processMessage(message) {
     // Show loading indicator
     const loadingDiv = document.createElement('div');
     loadingDiv.classList.add('message', 'bot');
@@ -292,57 +272,58 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Remove loading indicator
       chatMessages.removeChild(loadingDiv);
       
-      // Static responses for GitHub Pages demo
+      // Process the message based on keywords (static demo)
       const lowerMessage = message.toLowerCase();
       
-      if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
-        addMessage('Hello! I\'m the Analytics Chatbot. How can I help you today?', 'bot');
-      }
-      else if (lowerMessage.includes('list tables') || lowerMessage.includes('show tables')) {
+      if (lowerMessage.includes('list') && lowerMessage.includes('table')) {
         addMessage({
           type: 'tableList',
           message: 'Here are the available tables:',
-          data: ['dealer_analytics']
+          data: ['dealer_analytics', 'sales_data', 'customer_metrics', 'product_inventory']
         }, 'bot');
       }
-      else if (lowerMessage.includes('schema') || lowerMessage.includes('structure')) {
+      else if (lowerMessage.includes('schema') && lowerMessage.includes('dealer_analytics')) {
         addMessage({
           type: 'tableSchema',
           message: 'Schema for table dealer_analytics:',
           data: [
-            { name: 'Dealer Legal Name', type: 'STRING', mode: 'REQUIRED', description: 'Name of the dealer' },
-            { name: '5209', type: 'INTEGER', mode: 'NULLABLE', description: 'Visits' },
-            { name: '34655', type: 'INTEGER', mode: 'NULLABLE', description: 'Unique Visitors' }
+            { name: 'dealer_id', type: 'STRING', mode: 'REQUIRED', description: 'Unique dealer identifier' },
+            { name: 'dealer', type: 'STRING', mode: 'REQUIRED', description: 'Dealer name' },
+            { name: '5209', type: 'INTEGER', mode: 'NULLABLE', description: 'Number of visits' },
+            { name: '34655', type: 'INTEGER', mode: 'NULLABLE', description: 'Number of sales' },
+            { name: 'region', type: 'STRING', mode: 'NULLABLE', description: 'Geographic region' },
+            { name: 'last_updated', type: 'TIMESTAMP', mode: 'NULLABLE', description: 'Last update timestamp' }
           ]
         }, 'bot');
       }
-      else if (lowerMessage.includes('top') && lowerMessage.includes('visits')) {
+      else if (lowerMessage.includes('top') && lowerMessage.includes('sales') && lowerMessage.includes('visit')) {
         addMessage({
           type: 'queryResults',
           message: 'Top 5 sales reps by visits:',
           data: {
             rows: [
-              { 'Dealer Legal Name (v183)': 'boutique_telus_/_boutique_koodo', '5209': '2411' },
-              { 'Dealer Legal Name (v183)': 'client_operations', '5209': '1512' },
-              { 'Dealer Legal Name (v183)': 'small_business_solutions_outbound', '5209': '931' },
-              { 'Dealer Legal Name (v183)': 'wal-mart_canada_corp./la_compagnie_wal-mart_du_canada', '5209': '752' },
-              { 'Dealer Legal Name (v183)': 'css_outbound', '5209': '386' }
+              { dealer_id: 'D1001', dealer: 'TELUS Mobility', '5209': 1250, '34655': 450, region: 'West' },
+              { dealer_id: 'D1002', dealer: 'Rogers Wireless', '5209': 1100, '34655': 420, region: 'East' },
+              { dealer_id: 'D1003', dealer: 'Bell Mobility', '5209': 980, '34655': 380, region: 'Central' },
+              { dealer_id: 'D1004', dealer: 'Freedom Mobile', '5209': 850, '34655': 320, region: 'West' },
+              { dealer_id: 'D1005', dealer: 'Koodo Mobile', '5209': 820, '34655': 310, region: 'East' }
             ],
-            metadata: {
-              rowCount: 5
-            }
+            metadata: { rowCount: 5 }
           }
         }, 'bot');
       }
       else if (lowerMessage.includes('calculated') && lowerMessage.includes('field')) {
-        if (lowerMessage.includes('list') || lowerMessage.includes('show')) {
+        if (lowerMessage.includes('list')) {
           addMessage({
             type: 'text',
-            message: 'Available calculated fields:\n5209_to_34655_ratio: Ratio of Visits to Unique Visitors\ntotal_metrics: Sum of all numeric metrics\naverage_metrics: Average of all numeric metrics'
+            message: 'Available calculated fields:\nconversion_rate: 34655 / 5209\nvisit_efficiency: 5209 / total_hours'
           }, 'bot');
         }
         else if (lowerMessage.includes('create') || lowerMessage.includes('add')) {
-          addMessage('Created calculated field successfully! You can now use it in your queries.', 'bot');
+          addMessage({
+            type: 'text',
+            message: 'Created calculated field! (Note: This is a static demo, so the field is not actually stored)'
+          }, 'bot');
         }
         else {
           addMessage({
@@ -351,24 +332,40 @@ document.addEventListener('DOMContentLoaded', async () => {
           }, 'bot');
         }
       }
-      else if (lowerMessage.includes('select') || lowerMessage.includes('query')) {
+      else if (lowerMessage.includes('cse') && lowerMessage.includes('mobility_sales') && lowerMessage.includes('getting_started')) {
         addMessage({
           type: 'queryResults',
-          message: 'Query results:',
+          message: 'Top 5 sales reps by CSE>Mobility_Sales>Getting_Started:',
           data: {
             rows: [
-              { 'Dealer Legal Name (v183)': 'boutique_telus_/_boutique_koodo', '5209': '2411', '34655': '9780', 'calculated_ratio': '0.2464' },
-              { 'Dealer Legal Name (v183)': 'client_operations', '5209': '1512', '34655': '3529', 'calculated_ratio': '0.4285' },
-              { 'Dealer Legal Name (v183)': 'small_business_solutions_outbound', '5209': '931', '34655': '2175', 'calculated_ratio': '0.4280' }
+              { dealer_id: 'D2001', dealer: 'TELUS Flagship Store', 'cse>mobility_sales>getting_started': 95, region: 'West' },
+              { dealer_id: 'D2002', dealer: 'TELUS Authorized Dealer', 'cse>mobility_sales>getting_started': 92, region: 'Central' },
+              { dealer_id: 'D2003', dealer: 'TELUS Corporate Store', 'cse>mobility_sales>getting_started': 88, region: 'East' },
+              { dealer_id: 'D2004', dealer: 'TELUS Express Kiosk', 'cse>mobility_sales>getting_started': 85, region: 'West' },
+              { dealer_id: 'D2005', dealer: 'TELUS Partner Location', 'cse>mobility_sales>getting_started': 82, region: 'Central' }
             ],
-            metadata: {
-              rowCount: 3
-            }
+            metadata: { rowCount: 5 }
+          }
+        }, 'bot');
+      }
+      else if (lowerMessage.includes('average') && lowerMessage.includes('ratio')) {
+        // Add a demo of the new statistical operations on ratios feature
+        addMessage({
+          type: 'queryResults',
+          message: 'I understood you wanted to get metrics with mean of the ratio of Order Confirmations to Total Visits across the whole dataset',
+          data: {
+            rows: [
+              { 'Statistical Operation': 'Average Ratio', 'Value': 0.3842, 'Description': 'Average ratio of Order Confirmations to Total Visits' }
+            ],
+            metadata: { rowCount: 1 }
           }
         }, 'bot');
       }
       else {
-        addMessage("I'm sorry, this is a static demo for GitHub Pages. In the full version, I can process natural language queries and execute SQL queries against your data. Try asking about tables, schemas, or calculated fields.", 'bot');
+        addMessage({
+          type: 'text',
+          message: "I'm a static demo version of the Analytics Chatbot. Try asking me about:\n- List all tables\n- Show me the schema of dealer_analytics\n- What are the top 5 sales reps by visits?\n- Create a calculated field 5209 / 34655 as ratio\n- List calculated fields\n- What is the average ratio of Order Confirmations to Total Visits?"
+        }, 'bot');
       }
     }, 1000);
   }

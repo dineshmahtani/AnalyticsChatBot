@@ -1,44 +1,61 @@
 # Analytics Chatbot
 
-A chatbot interface for querying Google BigQuery data using natural language.
+A natural language interface for querying BigQuery data. This chatbot allows users to ask questions about their data in plain English and get visualized results.
 
-## Overview
+## Features
 
-The Analytics Chatbot provides a user-friendly interface to interact with your BigQuery datasets. It allows users to:
+- Natural language processing to convert English queries to SQL
+- Support for querying BigQuery datasets
+- Visualization of query results
+- Calculated fields for custom metrics
+- Statistical operations on ratios (average, median, etc.)
+- Query interpretation display for better transparency
+- Memory system to recall previous queries
+- Responsive design that works on desktop and mobile
 
-- List available tables in a dataset
-- View table schemas
-- Execute SQL queries
-- Ask questions in natural language (basic implementation)
+## Demo
+
+A static demo version is available on GitHub Pages: [https://dineshmahtani.github.io/AnalyticsChatBot/](https://dineshmahtani.github.io/AnalyticsChatBot/)
+
+The demo version simulates responses to common queries such as:
+- "List all tables"
+- "Show me the schema of dealer_analytics"
+- "What are the top 5 sales reps by visits?"
+- "Create a calculated field 5209 / 34655 as ratio"
+- "List calculated fields"
 
 ## Project Structure
 
-```
-AnalyticsChatBot/
-├── config/
-│   └── mcp/
-│       └── bigquery-config.json  # BigQuery MCP server configuration
-├── scripts/
-│   └── setup-bigquery-mcp.js     # Script to set up the BigQuery MCP server
-├── src/
-│   ├── services/
-│   │   └── bigquery-service.js   # Service for interacting with BigQuery
-│   ├── app.js                    # Frontend JavaScript
-│   ├── chatbot.js                # Chatbot logic
-│   ├── index.html                # Main HTML page
-│   └── styles.css                # CSS styles
-└── README.md                     # This file
-```
+- `/src` - Source code for the full application
+  - `/src/services` - Backend services for data processing
+  - `/src/app.js` - Main application logic
+  - `/src/chatbot.js` - Chatbot implementation
+- `/server` - Backend server implementation
+  - `/server/services` - Server-side services including NLP
+- `/scripts` - Utility scripts
+- `/config` - Configuration files
+- `/docs` - Documentation
+  - `/docs/feature-updates.md` - Details on recent feature updates
 
-## Setup Instructions
+## Recent Updates
+
+The Analytics Chatbot has been enhanced with two major features:
+
+1. **Statistical Operations on Ratios**: The chatbot can now perform statistical operations (average, median, etc.) on ratio calculations, enabling more complex analytical queries.
+
+2. **Query Interpretation Display**: The system now shows how it interpreted your query, making it easier to understand results and formulate effective queries.
+
+For more details, see [Feature Updates Documentation](docs/feature-updates.md).
+
+## Local Development
 
 ### Prerequisites
 
-- Node.js (v14 or higher)
-- Google Cloud Platform account with BigQuery access
-- BigQuery dataset
+- Node.js (v14+)
+- npm or yarn
+- Access to BigQuery (for full functionality)
 
-### Installation
+### Setup
 
 1. Clone the repository:
    ```
@@ -51,132 +68,29 @@ AnalyticsChatBot/
    npm install
    ```
 
-3. Configure the BigQuery MCP server:
-   - Update the `config/mcp/bigquery-config.json` file with your GCP project details:
-     ```json
-     {
-       "gcp": {
-         "project_id": "YOUR_GCP_PROJECT_ID",
-         "location": "YOUR_GCP_LOCATION",
-         "dataset": "YOUR_BIGQUERY_DATASET"
-       },
-       "mcp": {
-         "server_name": "bigquery",
-         "command": "uv",
-         "args": [
-           "--directory",
-           "/Users/dinesh/Documents/Cline/MCP/mcp-server-bigquery",
-           "run",
-           "mcp-server-bigquery",
-           "--project",
-           "YOUR_GCP_PROJECT_ID",
-           "--location",
-           "YOUR_GCP_LOCATION",
-           "--dataset",
-           "YOUR_BIGQUERY_DATASET"
-         ]
-       }
-     }
-     ```
+3. Configure BigQuery access (optional):
+   - Update `config/default.json` with your BigQuery credentials
+   - Or use the configuration panel in the UI
 
-4. Run the setup script to configure the MCP server:
+4. Start the development server:
    ```
-   node scripts/setup-bigquery-mcp.js
+   npm start
    ```
 
-5. Start the application:
-   ```
-   cd src
-   open index.html
-   ```
+5. Open your browser to `http://localhost:3000`
 
 ## Usage
 
-### Web Interface
+1. Type your query in natural language in the chat input
+2. The chatbot will process your query and display the results
+3. For complex queries, you can use calculated fields
 
-The web interface provides a chat-like experience for interacting with your BigQuery data:
-
-1. **Configuration Panel**: Enter your GCP project details in the configuration panel on the right side of the screen.
-
-2. **Chat Interface**: Use the chat input at the bottom of the screen to ask questions about your data.
-
-### Example Queries
-
-- **List tables**: "List all tables" or "Show tables"
-- **View schema**: "Show schema of table_name" or "What's the structure of table_name?"
-- **Execute query**: "SELECT * FROM table_name LIMIT 10"
-- **Natural language**: "Show me the top 10 records from table_name"
-
-## Updating GCP Configuration
-
-When you receive your GCP dataset details, you'll need to update the configuration:
-
-1. Edit the `config/mcp/bigquery-config.json` file with your actual GCP details:
-   - `project_id`: Your GCP project ID
-   - `location`: The location of your BigQuery dataset (e.g., "us-central1")
-   - `dataset`: The name of your BigQuery dataset
-
-2. Run the setup script to update the MCP server configuration:
-   ```
-   node scripts/setup-bigquery-mcp.js
-   ```
-
-3. Restart VS Code to apply the changes.
-
-4. You can also update the configuration through the web interface by entering your GCP details in the configuration panel.
-
-## Development
-
-### Adding New Features
-
-To extend the chatbot's capabilities:
-
-1. **Enhance Natural Language Processing**: Modify the `processQuery` method in `src/chatbot.js` to handle more complex queries.
-
-2. **Add New Query Types**: Extend the `BigQueryService` class in `src/services/bigquery-service.js` with additional methods for specific query types.
-
-3. **Improve UI**: Enhance the user interface in `src/index.html` and `src/styles.css`.
-
-### Testing
-
-The project includes two testing options:
-
-#### Local CSV Data Testing
-
-The chatbot can use local CSV data files for testing without a BigQuery connection:
-
-1. Place your CSV data files in the `data/` directory.
-
-2. The system is pre-configured to use the file `data/Dealer MSS (Copy)_Dinesh (Copy) - TELUS Global Production - Mar 20, 2025.csv`.
-
-3. Start the application with `npm run start` to test with this local data.
-
-4. Example queries for local data:
-   - "List all tables" - Shows the available tables (dealer_analytics)
-   - "Show me dealer data" - Displays dealer information
-   - "Show data for Telus" - Filters data for Telus dealers
-   - "Show data for Walmart" - Filters data for Walmart dealers
-
-#### BigQuery Testing
-
-To test with real BigQuery data:
-
-1. Configure your GCP details as described in the "Updating GCP Configuration" section.
-
-2. Set `useLocalData: false` in the chatbot initialization in `src/app.js`.
-
-3. Modify the `BigQueryService` class to use the actual MCP tool calls instead of the mock data.
-
-## Troubleshooting
-
-### Common Issues
-
-- **MCP Server Not Connected**: Ensure the MCP server is properly configured and VS Code has been restarted.
-
-- **Authentication Errors**: Verify your GCP credentials and project access permissions.
-
-- **Query Errors**: Check your SQL syntax and ensure the tables you're querying exist in your dataset.
+Example queries:
+- "What are the top 10 dealers by visits?"
+- "Show me the conversion rate for each region"
+- "Create a calculated field visits / sales as efficiency"
+- "What's the average efficiency for the top 5 dealers?"
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT

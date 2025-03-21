@@ -1,6 +1,10 @@
-# Dependency directories
+# Dependencies
 node_modules/
-.npm/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
 
 # Environment variables
 .env
@@ -9,19 +13,32 @@ node_modules/
 .env.test.local
 .env.production.local
 
-# Debug logs
+# Build files
+/build
+/dist
+/.next
+/out
+
+# Cache
+.cache/
+.npm
+.eslintcache
+
+# Logs
+logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
 # Editor directories and files
-.idea/
-.vscode/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+.idea
+.vscode
+*.swp
+*.swo
+.DS_Store
+*.sublime-project
+*.sublime-workspace
 
 # OS generated files
 .DS_Store
@@ -32,10 +49,6 @@ yarn-error.log*
 ehthumbs.db
 Thumbs.db
 
-# Build directories
-dist/
-build/
-
-# Local configuration files
-# Uncomment the following line if you want to exclude the BigQuery config file from version control
-# config/mcp/bigquery-config.json
+# BigQuery credentials
+bigquery-credentials.json
+*-credentials.json

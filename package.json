@@ -6,6 +6,7 @@
   "scripts": {
     "start": "open src/index.html",
     "setup-mcp": "node scripts/setup-bigquery-mcp.js",
+    "serve-static": "open index.html",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
